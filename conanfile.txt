@@ -1,0 +1,16 @@
+[requires]
+imgui/1.83
+sdl2/2.0.14@bincrafters/stable
+# sdl2_mixer/2.0.4@bincrafters/stable
+boost-ext-ut/1.1.8
+spdlog/1.8.5
+vorbis/1.3.7
+flac/1.3.3
+# libalsa/1.2.4
+pulseaudio/14.0
+
+[generators]
+cmake
+
+[options]
+
