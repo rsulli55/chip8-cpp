@@ -1,2 +1,2 @@
-# chp8-cpp
+# chip8-cpp
 CHIP-8 Emulator written in C++
