@@ -1,3 +1,5 @@
+#pragma once
+
 #include <array>
 #include <cstdint>
 #include <stack>
@@ -14,7 +16,10 @@ class Chip8 {
     u8 sound() const noexcept { return sound_; }
     u8 delay() const noexcept { return delay_; }
 
+    void execute(u16 opcode) noexcept;
+
   private:
+    void inline _6XNN(u16 opcode) noexcept;
     // registers
     u16 pc_ = 0x200;
     u16 I_ = 0x0;
