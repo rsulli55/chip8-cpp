@@ -1,0 +1,187 @@
+[settings]
+    arch=x86_64
+    build_type=Release
+    compiler=gcc
+    compiler.libcxx=libstdc++11
+    compiler.version=11
+    os=Linux
+
+[requires]
+    boost-ext-ut/1.Y.Z
+    flac/1.Y.Z
+    imgui/1.Y.Z
+    pulseaudio/14.Y.Z
+    sdl2/2.Y.Z
+    spdlog/1.Y.Z
+    vorbis/1.Y.Z
+
+[options]
+
+
+[full_settings]
+    arch=x86_64
+    arch_build=x86_64
+    build_type=Release
+    compiler=gcc
+    compiler.libcxx=libstdc++11
+    compiler.version=11
+    os=Linux
+    os_build=Linux
+
+[full_requires]
+    boost-ext-ut/1.1.8:5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9
+    flac/1.3.3:4dcc91d5acb6cba12dcc413607cfda5778f7632d
+    fmt/7.1.3:6557f18ca99c0b6a233f43db00e30efaa525e27e
+    imgui/1.83:6557f18ca99c0b6a233f43db00e30efaa525e27e
+    libalsa/1.2.4:30b1dc656c82170e68989f5a539d6e3469561214
+    libcap/2.48:dfbe50feef7f3c6223a476cd5aeadb687084a646
+    libiconv/1.16:dfbe50feef7f3c6223a476cd5aeadb687084a646
+    libsndfile/1.0.31:83624d15014338f25d287bddee684b524fd7af79
+    libunwind/1.5.0:7c6b629f954e8539233b99cd717b42f9c13e3d60
+    ogg/1.3.4:dfbe50feef7f3c6223a476cd5aeadb687084a646
+    opengl/system:5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9
+    openssl/1.1.1k:dfbe50feef7f3c6223a476cd5aeadb687084a646
+    opus/1.3.1:dfbe50feef7f3c6223a476cd5aeadb687084a646
+    pulseaudio/14.0:77c2150040d6b400293c416948f410899dde33b1
+    sdl2/2.0.14@bincrafters/stable:2bddd54730c09225aa6bbc1efc17f4ac625ae61e
+    spdlog/1.8.5:9451767843c5bfb2f2cab883e38fce1040a9cf5a
+    vorbis/1.3.7:6dc8cd39c5b0e3955526ea49034a31dbe9d01a47
+    xorg/system:5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9
+    xz_utils/5.2.5:dfbe50feef7f3c6223a476cd5aeadb687084a646
+
+[full_options]
+    flac:fPIC=True
+    flac:shared=False
+    fmt:fPIC=True
+    fmt:header_only=False
+    fmt:shared=False
+    fmt:with_fmt_alias=False
+    imgui:fPIC=True
+    imgui:shared=False
+    libalsa:disable_python=True
+    libalsa:fPIC=True
+    libalsa:shared=False
+    libcap:fPIC=True
+    libcap:psx_syscals=False
+    libcap:shared=False
+    libiconv:fPIC=True
+    libiconv:shared=False
+    libsndfile:experimental=False
+    libsndfile:fPIC=True
+    libsndfile:programs=True
+    libsndfile:shared=False
+    libsndfile:with_alsa=False
+    libsndfile:with_external_libs=True
+    libsndfile:with_sqlite=deprecated
+    libunwind:coredump=True
+    libunwind:fPIC=True
+    libunwind:ptrace=True
+    libunwind:setjmp=True
+    libunwind:shared=False
+    ogg:fPIC=True
+    ogg:shared=False
+    openssl:386=False
+    openssl:fPIC=True
+    openssl:no_aria=False
+    openssl:no_asm=False
+    openssl:no_async=False
+    openssl:no_bf=False
+    openssl:no_blake2=False
+    openssl:no_camellia=False
+    openssl:no_cast=False
+    openssl:no_chacha=False
+    openssl:no_cms=False
+    openssl:no_comp=False
+    openssl:no_ct=False
+    openssl:no_deprecated=False
+    openssl:no_des=False
+    openssl:no_dgram=False
+    openssl:no_dh=False
+    openssl:no_dsa=False
+    openssl:no_dso=False
+    openssl:no_ec=False
+    openssl:no_ecdh=False
+    openssl:no_ecdsa=False
+    openssl:no_engine=False
+    openssl:no_filenames=False
+    openssl:no_gost=False
+    openssl:no_hmac=False
+    openssl:no_idea=False
+    openssl:no_md4=False
+    openssl:no_md5=False
+    openssl:no_mdc2=False
+    openssl:no_ocsp=False
+    openssl:no_pinshared=False
+    openssl:no_rc2=False
+    openssl:no_rfc3779=False
+    openssl:no_rmd160=False
+    openssl:no_rsa=False
+    openssl:no_seed=False
+    openssl:no_sha=False
+    openssl:no_sm2=False
+    openssl:no_sm3=False
+    openssl:no_sm4=False
+    openssl:no_sock=False
+    openssl:no_srp=False
+    openssl:no_srtp=False
+    openssl:no_sse2=False
+    openssl:no_ssl=False
+    openssl:no_ssl3=False
+    openssl:no_threads=False
+    openssl:no_tls1=False
+    openssl:no_ts=False
+    openssl:no_whirlpool=False
+    openssl:openssldir=None
+    openssl:shared=False
+    opus:fPIC=True
+    opus:fixed_point=False
+    opus:shared=False
+    pulseaudio:fPIC=True
+    pulseaudio:shared=False
+    pulseaudio:with_alsa=True
+    pulseaudio:with_dbus=False
+    pulseaudio:with_glib=False
+    pulseaudio:with_openssl=True
+    pulseaudio:with_x11=True
+    sdl2:alsa=True
+    sdl2:arts=False
+    sdl2:directfb=False
+    sdl2:esd=False
+    sdl2:fPIC=True
+    sdl2:iconv=True
+    sdl2:jack=True
+    sdl2:libunwind=True
+    sdl2:nas=True
+    sdl2:opengl=True
+    sdl2:opengles=True
+    sdl2:pulse=True
+    sdl2:sdl2main=True
+    sdl2:shared=False
+    sdl2:sndio=False
+    sdl2:video_rpi=False
+    sdl2:vulkan=True
+    sdl2:wayland=False
+    sdl2:x11=True
+    sdl2:xcursor=True
+    sdl2:xinerama=True
+    sdl2:xinput=True
+    sdl2:xrandr=True
+    sdl2:xscrnsaver=True
+    sdl2:xshape=True
+    sdl2:xvm=True
+    spdlog:fPIC=True
+    spdlog:header_only=False
+    spdlog:no_exceptions=False
+    spdlog:shared=False
+    spdlog:wchar_filenames=False
+    spdlog:wchar_support=False
+    vorbis:fPIC=True
+    vorbis:shared=False
+    xz_utils:fPIC=True
+    xz_utils:shared=False
+
+[recipe_hash]
+
+
+[env]
+
