@@ -9,9 +9,9 @@ set_property(TARGET instruction_tests
     PROPERTY CXX_STANDARD 20)
 set_property(TARGET helper_tests
     PROPERTY CXX_STANDARD 20)
-conan_target_link_libraries(initialization_tests CONAN_PKG::boost-ext-ut)
-conan_target_link_libraries(instruction_tests CONAN_PKG::boost-ext-ut)
-conan_target_link_libraries(helper_tests CONAN_PKG::boost-ext-ut)
+conan_target_link_libraries(initialization_tests CONAN_PKG::boost-ext-ut CONAN_PKG::spdlog)
+conan_target_link_libraries(instruction_tests CONAN_PKG::boost-ext-ut CONAN_PKG::spdlog)
+conan_target_link_libraries(helper_tests CONAN_PKG::boost-ext-ut CONAN_PKG::spdlog)
 target_compile_options(initialization_tests PRIVATE -Werror -Wall -Wextra -pedantic-errors)
 target_compile_options(instruction_tests PRIVATE -Werror -Wall -Wextra -pedantic-errors)
 target_compile_options(helper_tests PRIVATE -Werror -Wall -Wextra -pedantic-errors)
