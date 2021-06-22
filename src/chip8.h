@@ -19,8 +19,12 @@ class Chip8 {
     void execute(u16 opcode) noexcept;
 
   private:
+    /// instructions
     void inline _6XNN(u16 opcode) noexcept;
-    // registers
+    void inline _7XNN(u16 opcode) noexcept;
+    void inline _8XY0(u16 opcode) noexcept;
+
+    /// special registers
     u16 pc_ = 0x200;
     u16 I_ = 0x0;
 
