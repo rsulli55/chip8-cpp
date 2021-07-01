@@ -115,7 +115,6 @@ boost::ut::suite instructions = [] {
         chip8.execute(0x7D09);
         expect(eq(chip8.V(0xD), 0xB));
 
-
         chip8.execute(0x6E03);
         chip8.execute(0x7ECB);
         expect(eq(chip8.V(0xE), 0xCE));
@@ -209,22 +208,23 @@ boost::ut::suite instructions = [] {
 
     // 8XY1 sets VX to VX | VY
     for (u8 X = 0; X < 16; ++X) {
-        for (u8 Y = X+1; Y < 16; ++Y) {
-            test("8XY1; X = " + std::to_string(X) + ", Y = " + std::to_string(Y)) = [&chip8, X, Y] {
+        for (u8 Y = X + 1; Y < 16; ++Y) {
+            test("8XY1; X = " + std::to_string(X) +
+                 ", Y = " + std::to_string(Y)) = [&chip8, X, Y] {
                 chip8.execute(0x6001 + (Y << 8));
                 expect(eq(chip8.V(Y), 0x01));
                 chip8.execute(0x60FF + (X << 8));
                 expect(eq(chip8.V(X), 0xFF));
                 chip8.execute(0x8001 + (X << 8) + (Y << 4));
                 expect(eq(chip8.V(X), 0xFF));
-                
+
                 chip8.execute(0x60F0 + (Y << 8));
                 expect(eq(chip8.V(Y), 0xF0));
                 chip8.execute(0x600F + (X << 8));
                 expect(eq(chip8.V(X), 0x0F));
                 chip8.execute(0x8001 + (X << 8) + (Y << 4));
                 expect(eq(chip8.V(X), 0xFF));
-                
+
                 chip8.execute(0x60BA + (Y << 8));
                 expect(eq(chip8.V(Y), 0xBA));
                 chip8.execute(0x604C + (X << 8));
@@ -243,22 +243,23 @@ boost::ut::suite instructions = [] {
 
     // 8XY2 sets VX to VX & VY
     for (u8 X = 0; X < 16; ++X) {
-        for (u8 Y = X+1; Y < 16; ++Y) {
-            test("8XY2; X = " + std::to_string(X) + ", Y = " + std::to_string(Y)) = [&chip8, X, Y] {
+        for (u8 Y = X + 1; Y < 16; ++Y) {
+            test("8XY2; X = " + std::to_string(X) +
+                 ", Y = " + std::to_string(Y)) = [&chip8, X, Y] {
                 chip8.execute(0x6001 + (Y << 8));
                 expect(eq(chip8.V(Y), 0x01));
                 chip8.execute(0x60FF + (X << 8));
                 expect(eq(chip8.V(X), 0xFF));
                 chip8.execute(0x8002 + (X << 8) + (Y << 4));
                 expect(eq(chip8.V(X), 0x01));
-                
+
                 chip8.execute(0x60F0 + (Y << 8));
                 expect(eq(chip8.V(Y), 0xF0));
                 chip8.execute(0x600F + (X << 8));
                 expect(eq(chip8.V(X), 0x0F));
                 chip8.execute(0x8002 + (X << 8) + (Y << 4));
                 expect(eq(chip8.V(X), 0x0));
-                
+
                 chip8.execute(0x60BA + (Y << 8));
                 expect(eq(chip8.V(Y), 0xBA));
                 chip8.execute(0x604C + (X << 8));
@@ -277,22 +278,23 @@ boost::ut::suite instructions = [] {
 
     // 8XY3 sets VX to VX & VY
     for (u8 X = 0; X < 16; ++X) {
-        for (u8 Y = X+1; Y < 16; ++Y) {
-            test("8XY3; X = " + std::to_string(X) + ", Y = " + std::to_string(Y)) = [&chip8, X, Y] {
+        for (u8 Y = X + 1; Y < 16; ++Y) {
+            test("8XY3; X = " + std::to_string(X) +
+                 ", Y = " + std::to_string(Y)) = [&chip8, X, Y] {
                 chip8.execute(0x6001 + (Y << 8));
                 expect(eq(chip8.V(Y), 0x01));
                 chip8.execute(0x60FF + (X << 8));
                 expect(eq(chip8.V(X), 0xFF));
                 chip8.execute(0x8003 + (X << 8) + (Y << 4));
                 expect(eq(chip8.V(X), 0xFE));
-                
+
                 chip8.execute(0x60F0 + (Y << 8));
                 expect(eq(chip8.V(Y), 0xF0));
                 chip8.execute(0x600F + (X << 8));
                 expect(eq(chip8.V(X), 0x0F));
                 chip8.execute(0x8003 + (X << 8) + (Y << 4));
                 expect(eq(chip8.V(X), 0xFF));
-                
+
                 chip8.execute(0x60BA + (Y << 8));
                 expect(eq(chip8.V(Y), 0xBA));
                 chip8.execute(0x604C + (X << 8));
@@ -310,4 +312,4 @@ boost::ut::suite instructions = [] {
     }
 };
 
-int main () {}
+int main() {}
