@@ -19,4 +19,4 @@ boost::ut::suite helpers = [] {
     };
 };
 
-int main () {}
+int main() {}
