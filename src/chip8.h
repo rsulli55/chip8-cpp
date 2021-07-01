@@ -23,6 +23,9 @@ class Chip8 {
     void inline _6XNN(u16 opcode) noexcept;
     void inline _7XNN(u16 opcode) noexcept;
     void inline _8XY0(u16 opcode) noexcept;
+    void inline _8XY1(u16 opcode) noexcept;
+    void inline _8XY2(u16 opcode) noexcept;
+    void inline _8XY3(u16 opcode) noexcept;
 
     /// special registers
     u16 pc_ = 0x200;

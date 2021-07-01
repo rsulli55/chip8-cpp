@@ -30,10 +30,13 @@ void Chip8::execute(u16 opcode) noexcept {
                     _8XY0(opcode);
                     break;
                 case 0x1:
+                    _8XY1(opcode);
                     break;
                 case 0x2:
+                    _8XY2(opcode);
                     break;
                 case 0x3:
+                    _8XY3(opcode);
                     break;
                 case 0x4:
                     break;
@@ -83,4 +86,22 @@ void inline Chip8::_8XY0(u16 opcode) noexcept {
     auto second_nibble = nibble(nib::second, opcode);
     auto third_nibble = nibble(nib::third, opcode);
     V_[second_nibble] = V_[third_nibble];
+}
+
+void inline Chip8::_8XY1(u16 opcode) noexcept {
+    auto second_nibble = nibble(nib::second, opcode);
+    auto third_nibble = nibble(nib::third, opcode);
+    V_[second_nibble] |= V_[third_nibble];
+}
+
+void inline Chip8::_8XY2(u16 opcode) noexcept {
+    auto second_nibble = nibble(nib::second, opcode);
+    auto third_nibble = nibble(nib::third, opcode);
+    V_[second_nibble] &= V_[third_nibble];
+}
+
+void inline Chip8::_8XY3(u16 opcode) noexcept {
+    auto second_nibble = nibble(nib::second, opcode);
+    auto third_nibble = nibble(nib::third, opcode);
+    V_[second_nibble] ^= V_[third_nibble];
 }
