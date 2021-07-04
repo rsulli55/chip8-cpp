@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
-#include <stack>
 #include <ranges>
+#include <stack>
 #include <vector>
 
 #include "common.h"
@@ -22,18 +22,22 @@ class Chip8 {
 
     void execute(u16 opcode) noexcept;
 
-    bool screen_equal(const std::array<std::array<bool, 32>, 64>& other) const noexcept {
+    bool screen_equal(
+        const std::array<std::array<bool, 32>, 64> &other) const noexcept {
         return std::ranges::equal(screen_, other);
     }
 
-    // TODO: figure out a nice way to keep track of where the screen is incorrect
-    /* auto screen_difference(const std::array<std::array<bool, 32>, 64>& other) const noexcept { */
+    // TODO: figure out a nice way to keep track of where the screen is
+    // incorrect
+    /* auto screen_difference(const std::array<std::array<bool, 32>, 64>& other)
+     * const noexcept { */
     /*     auto to_return = std::vector<decltype(std::views::iota())>{}; */
     /*     auto check_equal = [this, &other](size_t i) { */
     /*         return screen_[i] != other[i]; */
     /*     }; */
-    /*     std::ranges::for_each(other, [](std::array<bool, 32>& row) { */ 
-    /*             return std::views::iota(0u, row.size()) | std::views::filter(check_equal); */
+    /*     std::ranges::for_each(other, [](std::array<bool, 32>& row) { */
+    /*             return std::views::iota(0u, row.size()) |
+     * std::views::filter(check_equal); */
     /*             } */
     /* } */
 
@@ -42,9 +46,7 @@ class Chip8 {
     void clear_screen() noexcept {
         std::ranges::fill(screen_, std::array<bool, 32>{false});
     }
-    void clear_bad_opcode() noexcept {
-        bad_opcode_ = false;
-    }
+    void clear_bad_opcode() noexcept { bad_opcode_ = false; }
 
     /// instructions
     void inline _0NNN([[maybe_unused]] u16 opcode) noexcept;
@@ -71,7 +73,8 @@ class Chip8 {
     static constexpr u8 FONT_START = 0x50;
 
     // screen
-    std::array<std::array<bool, 32>, 64> screen_ = {std::array<bool, 32>{false}};
+    std::array<std::array<bool, 32>, 64> screen_ = {
+        std::array<bool, 32>{false}};
 
     // stack
     // used for storing 16-bit addresses
