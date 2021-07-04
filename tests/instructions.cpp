@@ -7,6 +7,22 @@ boost::ut::suite instructions = [] {
     using namespace boost::ut;
     Chip8 chip8;
 
+    "0NNN"_test = [&chip8] {
+        chip8.execute(0x0000);
+        expect(chip8.bad_opcode());
+    };
+
+    "00E0"_test = [&chip8] {
+        chip8.execute(0x00E0);
+        expect(chip8.screen_equal(
+            std::array<std::array<bool, 32>, 64>{std::array<bool, 32>{false}}));
+    };
+
+    "00EE"_test = [&chip8] {
+        chip8.execute(0x00EE);
+        expect(chip8.bad_opcode());
+    };
+
     "6XNN"_test = [&chip8] {
         chip8.execute(0x6015);
         expect(eq(chip8.V(0x0), 0x15));

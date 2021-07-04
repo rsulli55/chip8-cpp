@@ -3,10 +3,26 @@
 #include "spdlog/spdlog.h"
 
 void Chip8::execute(u16 opcode) noexcept {
+    // clear bad_opcode if it was previously set
+    clear_bad_opcode();
+
     u16 first_nibble = nibble(nib::first, opcode);
     switch (first_nibble) {
-    case 0x0:
+    case 0x0: {
+        // 00E0 instruction
+        if (opcode == 0x00E0) {
+            _00E0(opcode);
+        }
+        // 00EE instruction
+        else if (opcode == 0x00EE) {
+            _00EE(opcode);
+        }
+        // 0NNN instruction
+        else {
+            _0NNN(opcode);
+        }
         break;
+    }
     case 0x1:
         break;
     case 0x2:
@@ -66,9 +82,23 @@ void Chip8::execute(u16 opcode) noexcept {
     case 0xF:
         break;
     }
+
+    // TODO: increment pc
 }
 
 // instructions
+void inline Chip8::_0NNN([[maybe_unused]] u16 opcode) noexcept {
+    bad_opcode_ = true;
+}
+
+void inline Chip8::_00E0([[maybe_unused]] u16 opcode) noexcept {
+    clear_screen();
+}
+
+void inline Chip8::_00EE([[maybe_unused]] u16 opcode) noexcept {
+    bad_opcode_ = true;
+}
+
 void inline Chip8::_6XNN(u16 opcode) noexcept {
     auto second_nibble = nibble(nib::second, opcode);
     V_[second_nibble] = opcode & 0x00FF;
