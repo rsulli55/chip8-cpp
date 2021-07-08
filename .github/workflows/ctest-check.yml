@@ -3,6 +3,9 @@ name: Run CMake and CTest
 
 on: pull_request
 
+env:
+  CONAN_REVISIONS_ENABLED=1
+
 jobs:
   build:
     runs-on: ubuntu-latest
