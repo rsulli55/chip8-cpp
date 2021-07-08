@@ -9,6 +9,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    compiler: gcc
+    gcc: 10
 
     steps:
     - uses: actions/checkout@v2
