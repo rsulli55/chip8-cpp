@@ -23,9 +23,9 @@ jobs:
 
     - name: Build using CMake
       shell: bash
-      run: cmake -S . -B ${{runner.workspace}/build
+      run: cmake -S . -B ${{runner.workspace}}/build
 
     - name: Run CTest
       shell: bash
-      run: ctest --test-dir ${{runner.workspace}/build
+      run: ctest --test-dir ${{runner.workspace}}/build
 
