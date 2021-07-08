@@ -5,12 +5,12 @@ on: pull_request
 
 env:
   CONAN_REVISIONS_ENABLED: 1
+  CC: gcc-10
+  CXX: g++-10
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    compiler: gcc
-    gcc: 10
 
     steps:
     - uses: actions/checkout@v2
