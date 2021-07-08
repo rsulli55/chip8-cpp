@@ -21,12 +21,15 @@ jobs:
         python3 -m pip install --upgrade pip setuptools
         python3 -m pip install conan
         source ~/.profile
+        sudo apt install libgl-dev
         conan remote add bincrafters https://bincrafters.jfrog.io/artifactory/api/conan/public-conan
         conan install . -s compiler.libcxx=libstdc++11 -if ${{runner.workspace}}/build -b
 
     - name: Build using CMake
       shell: bash
-      run: cmake -S . -B ${{runner.workspace}}/build
+      run: |
+        cmake -S . -B ${{runner.workspace}}/build
+        cmake --build ${{runner.workspace}}/build
 
     - name: Run CTest
       shell: bash
