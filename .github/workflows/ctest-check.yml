@@ -1,19 +1,31 @@
 # Run unit tests using CTest
-name: Run CTest
+name: Run CMake and CTest
 
 on: pull_request
 
 jobs:
-  checkout-and-check-formatting:
+  build:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    - name: Run unit tests
-      uses: HorstBaerbel/action-ctest@1.1
-      # These are optional (defaults displayed)
-      with:
-        sourcedir: '.'
-        builddir: 'build'
-        cmakeoptions: '--config Release'
-        ctestoptions: ''
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Install conan and dependencies
+      shell: bash
+      run: |
+        python3 -m pip install --upgrade pip setuptools
+        python3 -m pip install conan
+        source ~/.profile
+        cd ${{runner.workspace}}/build
+        conan install .. -b
+
+    - name: Build using CMake
+      shell: bash
+      run: cmake -S . -B ${{runner.workspace}/build
+
+    - name: Run CTest
+      shell: bash
+      run: ctest --test-dir ${{runner.workspace}/build
+
