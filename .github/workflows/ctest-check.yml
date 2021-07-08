@@ -18,7 +18,8 @@ jobs:
         python3 -m pip install --upgrade pip setuptools
         python3 -m pip install conan
         source ~/.profile
-        ls
+        conan remote add bincrafters https://bincrafters.jfrog.io/artifactory/api/conan/public-conan
+        conan remote add conancenter https://center.conan.io
         conan install . -s compiler.libcxx=libstdc++11 -if ${{runner.workspace}}/build -b
 
     - name: Build using CMake
