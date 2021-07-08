@@ -18,10 +18,7 @@ jobs:
         python3 -m pip install --upgrade pip setuptools
         python3 -m pip install conan
         source ~/.profile
-        cd ${{runner.workspace}}/build
-        pwd
-        ls ..
-        conan install  -s compiler.libcxx=libstdc++11 .. -b
+        conan install -s compiler.libcxx=libstdc++11 -if ${{runner.workspace}}/build -b
 
     - name: Build using CMake
       shell: bash
