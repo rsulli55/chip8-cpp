@@ -24,8 +24,10 @@ void Chip8::execute(u16 opcode) noexcept {
         break;
     }
     case 0x1:
+        _1NNN(opcode);
         break;
     case 0x2:
+        _2NNN(opcode);
         break;
     case 0x3:
         break;
@@ -87,23 +89,50 @@ void Chip8::execute(u16 opcode) noexcept {
 }
 
 // instructions
+// Execute machine language instruction, UNIMPLEMENTED
 void inline Chip8::_0NNN([[maybe_unused]] u16 opcode) noexcept {
     bad_opcode_ = true;
 }
 
+// Clear the screen
 void inline Chip8::_00E0([[maybe_unused]] u16 opcode) noexcept {
     clear_screen();
 }
 
+// Return from subroutine popping from stack and setting PC
 void inline Chip8::_00EE([[maybe_unused]] u16 opcode) noexcept {
-    bad_opcode_ = true;
+    assert(stack_.size() > 0);
+    spdlog::set_level(spdlog::level::debug);
+    spdlog::debug("In 00EE, originally pc = {}", pc_);
+    pc_ = stack_.top();
+    spdlog::debug("In 00EE, after stack_.top(), pc = {}", pc_);
+    stack_.pop();
 }
 
+// Jump to address 0xNNN
+void inline Chip8::_1NNN(u16 opcode) noexcept {
+    spdlog::set_level(spdlog::level::debug);
+    u16 address = 0x0FFF & opcode;
+    spdlog::debug("In 1NNN, setting pc to = {}", address);
+    pc_ = address;
+}
+
+// Execute subroutine at address 0xNNN pushing current PC onto stack
+void inline Chip8::_2NNN(u16 opcode) noexcept {
+    spdlog::set_level(spdlog::level::debug);
+    spdlog::debug("In 2NNN, pushing onto stack pc = {}", pc_);
+    stack_.push(pc_);
+    u16 address = 0x0FFF & opcode;
+    pc_ = address;
+}
+
+// Store 0xNN into register VX
 void inline Chip8::_6XNN(u16 opcode) noexcept {
     auto second_nibble = nibble(nib::second, opcode);
     V_[second_nibble] = opcode & 0x00FF;
 }
 
+// Add value 0xNN to register VX
 void inline Chip8::_7XNN(u16 opcode) noexcept {
     auto second_nibble = nibble(nib::second, opcode);
     /* spdlog::set_level(spdlog::level::debug); */

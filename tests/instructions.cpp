@@ -6,23 +6,74 @@
 boost::ut::suite instructions = [] {
     using namespace boost::ut;
     Chip8 chip8;
+    chip8.set_debug_level(spdlog::level::debug);
 
+    // Execute machine instruction at 0xNNN, which is unimplemented
     "0NNN"_test = [&chip8] {
         chip8.execute(0x0000);
         expect(chip8.bad_opcode());
     };
 
+    // Clear the screen
     "00E0"_test = [&chip8] {
         chip8.execute(0x00E0);
         expect(chip8.screen_equal(
             std::array<std::array<bool, 32>, 64>{std::array<bool, 32>{false}}));
     };
 
+    // Return from subroutine popping the PC from the stack
     "00EE"_test = [&chip8] {
+        chip8.execute(0x1BAD);
+        chip8.execute(0x2AA0);
+        expect(eq(chip8.pc(), 0x0AA0));
         chip8.execute(0x00EE);
-        expect(chip8.bad_opcode());
+        expect(eq(chip8.pc(), 0x0BAD));
+
+        chip8.execute(0x1CCC);
+        chip8.execute(0x2024);
+        expect(eq(chip8.pc(), 0x0024));
+        chip8.execute(0x00EE);
+        expect(eq(chip8.pc(), 0x0CCC));
     };
 
+    // Jump to address 0xNNN
+    "1NNN"_test = [&chip8] {
+        chip8.execute(0x1AAA);
+        expect(eq(chip8.pc(), 0x0AAA));
+
+        chip8.execute(0x1123);
+        expect(eq(chip8.pc(), 0x0123));
+
+        chip8.execute(0x1050);
+        expect(eq(chip8.pc(), 0x0050));
+
+        chip8.execute(0x14CE);
+        expect(eq(chip8.pc(), 0x04CE));
+    };
+
+    // Execute subroutine at 0xNNN, and push current PC onto stack
+    "2NNN"_test = [&chip8] {
+        chip8.execute(0x1AAA);
+        chip8.execute(0x2001);
+        expect(eq(chip8.pc(), 0x0001));
+        chip8.execute(0x00EE);
+        expect(eq(chip8.pc(), 0x0AAA));
+
+        chip8.execute(0x1123);
+        chip8.execute(0x2ABC);
+        expect(eq(chip8.pc(), 0x0ABC));
+        chip8.execute(0x00EE);
+        expect(eq(chip8.pc(), 0x0123));
+
+        chip8.execute(0x1D1E);
+        chip8.execute(0x2C4D);
+        expect(eq(chip8.pc(), 0x0C4D));
+        chip8.execute(0x00EE);
+        expect(eq(chip8.pc(), 0x0D1E));
+    };
+
+
+    // Store number 0xNN in register VX
     "6XNN"_test = [&chip8] {
         chip8.execute(0x6015);
         expect(eq(chip8.V(0x0), 0x15));
@@ -326,6 +377,31 @@ boost::ut::suite instructions = [] {
             };
         }
     }
+
+    // Store memory address 0xNNN in register I
+    "ANNN"_test = [&chip8] {
+        chip8.execute(0xA0AB);
+        expect(eq(chip8.I(), 0x00AB));
+
+        chip8.execute(0xA111);
+        expect(eq(chip8.I(), 0x0111));
+
+        chip8.execute(0xADED);
+        expect(eq(chip8.I(), 0x0DED));
+
+        chip8.execute(0xA456);
+        expect(eq(chip8.I(), 0x0456));
+
+        chip8.execute(0xAC4E);
+        expect(eq(chip8.I(), 0x0C4E));
+    };
+
+    // Draw sprite at position VX, VY with 0xN bytes of sprite data
+    // starting at the address stored in I
+    // Set VF to 0x01 if any set pixels are changed to unset, and 00 otherwise
+    "DXYN"_test = [&chip8] {
+        chip8.execute(0xDAB2);
+    };
 };
 
 int main() {}
