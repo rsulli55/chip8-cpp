@@ -67,6 +67,7 @@ class Chip8 {
     u16 pc() const noexcept { return pc_; }
     u16 I() const noexcept { return I_; }
     const std::stack<u16> &stack() const noexcept { return stack_; }
+    const auto &screen() const noexcept { return screen_; }
     u8 sound() const noexcept { return sound_; }
     u8 delay() const noexcept { return delay_; }
     bool bad_opcode() const noexcept { return bad_opcode_; }
@@ -85,6 +86,7 @@ class Chip8 {
                             std::views::transform([this, &other](u16 i) {
                                 return std::ranges::equal(screen_[i], other[i]);
                             });
+
         spdlog::debug("In screen_equal: finished intermediate");
         return std::ranges::all_of(std::cbegin(intermediate),
                                    std::cend(intermediate),
@@ -95,19 +97,21 @@ class Chip8 {
         spdlog::set_level(level);
     }
 
-    // TODO: figure out a nice way to keep track of where the screen is
-    // incorrect
-    /* auto screen_difference(const std::array<std::array<bool, 32>, 64>& other)
-     * const noexcept { */
-    /*     auto to_return = std::vector<decltype(std::views::iota())>{}; */
-    /*     auto check_equal = [this, &other](size_t i) { */
-    /*         return screen_[i] != other[i]; */
-    /*     }; */
-    /*     std::ranges::for_each(other, [](std::array<bool, 32>& row) { */
-    /*             return std::views::iota(0u, row.size()) |
-     * std::views::filter(check_equal); */
-    /*             } */
-    /* } */
+    auto screen_difference(const std::array<std::array<bool, SCREEN_WIDTH>, SCREEN_HEIGHT>& other)
+    const noexcept {
+         auto differences = std::array<std::array<bool, SCREEN_WIDTH>, SCREEN_HEIGHT>{};
+         auto compute_xor = [](const std::array<bool, SCREEN_WIDTH>& row1, 
+                 const std::array<bool, SCREEN_WIDTH>& row2) {
+            auto xored = std::array<bool, SCREEN_WIDTH>{};
+            std::ranges::transform(row1, row2, std::begin(xored), [](bool b1, bool b2) { return b1 != b2; });
+
+            return xored;
+         };
+
+         std::ranges::transform(screen_, other, std::begin(differences), compute_xor);
+
+         return differences;
+     } 
 
   private:
     // internal operations
