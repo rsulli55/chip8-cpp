@@ -6,23 +6,73 @@
 boost::ut::suite instructions = [] {
     using namespace boost::ut;
     Chip8 chip8;
+    chip8.set_debug_level(spdlog::level::debug);
 
+    // Execute machine instruction at 0xNNN, which is unimplemented
     "0NNN"_test = [&chip8] {
         chip8.execute(0x0000);
         expect(chip8.bad_opcode());
     };
 
+    // Clear the screen
     "00E0"_test = [&chip8] {
         chip8.execute(0x00E0);
         expect(chip8.screen_equal(
-            std::array<std::array<bool, 32>, 64>{std::array<bool, 32>{false}}));
+            std::array<std::array<bool, 64>, 32>{std::array<bool, 64>{false}}));
     };
 
+    // Return from subroutine popping the PC from the stack
     "00EE"_test = [&chip8] {
+        chip8.execute(0x1BAD);
+        chip8.execute(0x2AA0);
+        expect(eq(chip8.pc(), 0x0AA0));
         chip8.execute(0x00EE);
-        expect(chip8.bad_opcode());
+        expect(eq(chip8.pc(), 0x0BAD));
+
+        chip8.execute(0x1CCC);
+        chip8.execute(0x2024);
+        expect(eq(chip8.pc(), 0x0024));
+        chip8.execute(0x00EE);
+        expect(eq(chip8.pc(), 0x0CCC));
     };
 
+    // Jump to address 0xNNN
+    "1NNN"_test = [&chip8] {
+        chip8.execute(0x1AAA);
+        expect(eq(chip8.pc(), 0x0AAA));
+
+        chip8.execute(0x1123);
+        expect(eq(chip8.pc(), 0x0123));
+
+        chip8.execute(0x1050);
+        expect(eq(chip8.pc(), 0x0050));
+
+        chip8.execute(0x14CE);
+        expect(eq(chip8.pc(), 0x04CE));
+    };
+
+    // Execute subroutine at 0xNNN, and push current PC onto stack
+    "2NNN"_test = [&chip8] {
+        chip8.execute(0x1AAA);
+        chip8.execute(0x2001);
+        expect(eq(chip8.pc(), 0x0001));
+        chip8.execute(0x00EE);
+        expect(eq(chip8.pc(), 0x0AAA));
+
+        chip8.execute(0x1123);
+        chip8.execute(0x2ABC);
+        expect(eq(chip8.pc(), 0x0ABC));
+        chip8.execute(0x00EE);
+        expect(eq(chip8.pc(), 0x0123));
+
+        chip8.execute(0x1D1E);
+        chip8.execute(0x2C4D);
+        expect(eq(chip8.pc(), 0x0C4D));
+        chip8.execute(0x00EE);
+        expect(eq(chip8.pc(), 0x0D1E));
+    };
+
+    // Store number 0xNN in register VX
     "6XNN"_test = [&chip8] {
         chip8.execute(0x6015);
         expect(eq(chip8.V(0x0), 0x15));
@@ -326,6 +376,142 @@ boost::ut::suite instructions = [] {
             };
         }
     }
+
+    // Store memory address 0xNNN in register I
+    "ANNN"_test = [&chip8] {
+        chip8.execute(0xA0AB);
+        expect(eq(chip8.I(), 0x00AB));
+
+        chip8.execute(0xA111);
+        expect(eq(chip8.I(), 0x0111));
+
+        chip8.execute(0xADED);
+        expect(eq(chip8.I(), 0x0DED));
+
+        chip8.execute(0xA456);
+        expect(eq(chip8.I(), 0x0456));
+
+        chip8.execute(0xAC4E);
+        expect(eq(chip8.I(), 0x0C4E));
+    };
+
+    // Draw sprite at position VX, VY with 0xN bytes of sprite data
+    // starting at the address stored in I
+    // Set VF to 0x01 if any set pixels are changed to unset, and 00 otherwise
+    "DXYN"_test = [&chip8] {
+        // start of font
+        chip8.execute(0xA050);
+        // clear screen
+        chip8.execute(0x00E0);
+        // display character 0 at 0,0
+        chip8.execute(0x6000);
+        chip8.execute(0xD005);
+        std::array<std::array<bool, 64>, 32> expected{
+            std::array<bool, 64>{false}};
+        std::array<u8, 5> font_zero{0xF0, 0x90, 0x90, 0x90, 0xF0};
+        auto modify = [&expected](u8 byte, int row) {
+            spdlog::debug("In modify: byte is {:x}", byte);
+            auto bitmap = byte_to_bitmap(byte);
+            std::copy(std::cbegin(bitmap), std::cend(bitmap),
+                      std::begin(expected[row]));
+        };
+        const auto rows = std::views::iota(0ul, font_zero.size());
+        for (const auto row : rows) {
+            modify(font_zero[row], row);
+        }
+        expect(chip8.screen_equal(expected));
+        expect(eq(chip8.V(0xF), 0x0));
+
+        // calling it again should clear the screen (XOR) and set VF
+        chip8.execute(0xA050);
+        chip8.execute(0x6000);
+        chip8.execute(0xD005);
+        // reset expected
+        std::fill(std::begin(expected), std::end(expected),
+                  std::array<bool, 64>{false});
+        expect(chip8.screen_equal(expected));
+        expect(eq(chip8.V(0xF), 0x1));
+
+        // check wrapping of x and y
+        chip8.execute(0xA050);
+        // 0x48 = 72 = 8 (mod 64)
+        chip8.execute(0x6048);
+        // 0x24 = 36 = 4 (mod 32)
+        chip8.execute(0x6124);
+        // reset screen
+        chip8.execute(0x00E0);
+        // letter is shifted 8 pixels right and 4 pixels down
+        chip8.execute(0xD015);
+        // reset expected
+        std::fill(std::begin(expected), std::end(expected),
+                  std::array<bool, 64>{false});
+
+        auto modify2 = [&expected](u8 byte, int row, int col_start) {
+            spdlog::debug("In modify2: byte is {:x}, row = {}, col_start = {}",
+                          byte, row, col_start);
+            auto bitmap = byte_to_bitmap(byte);
+            std::copy(std::cbegin(bitmap), std::cend(bitmap),
+                      std::begin(expected[row]) + col_start);
+        };
+        for (const auto row : rows) {
+            modify2(font_zero[row], row + 4, 8);
+        }
+        expect(chip8.screen_equal(expected));
+        expect(eq(chip8.V(0xF), 0x0));
+
+        // check when a sprite gets cut off
+        chip8.execute(0xA050);
+        // 0x3B = 59 = -5 (mod 64)
+        chip8.execute(0x603B);
+        // 0x1D = 29 = -3 (mod 32)
+        chip8.execute(0x611D);
+        // reset screen
+        chip8.execute(0x00E0);
+        // letter is shifted 8 pixels right and 4 pixels down
+        chip8.execute(0xD015);
+        // reset expected
+        std::fill(std::begin(expected), std::end(expected),
+                  std::array<bool, 64>{false});
+        // just modify expected by hand
+        // Sprite 0 looks like the following
+        // F0: 1 1 1 1 0 0 0 0
+        // 90: 1 0 0 1 0 0 0 0
+        // 90: 1 0 0 1 0 0 0 0
+        // 90: 1 0 0 1 0 0 0 0
+        // F0: 1 1 1 1 0 0 0 0
+        // If we draw it at x = 59, y = 29 we should expect to see
+        // F0: 1 1 1 1 0 |
+        // 90: 1 0 0 1 0 |
+        // 90: 1 0 0 1 0 |
+        // ---------------
+        // F0
+        expected[31 - 2][63 - 1] = true;
+        expected[31 - 2][63 - 2] = true;
+        expected[31 - 2][63 - 3] = true;
+        expected[31 - 2][63 - 4] = true;
+        // 90
+        expected[31 - 1][63 - 1] = true;
+        expected[31 - 1][63 - 4] = true;
+        // 90
+        expected[31 - 0][63 - 1] = true;
+        expected[31 - 0][63 - 4] = true;
+        expect(chip8.screen_equal(expected));
+        expect(eq(chip8.V(0xF), 0x0));
+
+        const auto differences = chip8.screen_difference(expected);
+        const auto screen = chip8.screen();
+        for (auto row = 0; row < 32; ++row) {
+            for (auto col = 0; col < 64; ++col) {
+                if (differences[row][col]) {
+                    spdlog::debug("Difference at row {} and col {}", row, col);
+                    spdlog::debug("screen[{}][{}] = {}", row, col,
+                                  screen[row][col]);
+                    spdlog::debug("expected[{}][{}] = {}", row, col,
+                                  expected[row][col]);
+                }
+            }
+        }
+    };
 };
 
 int main() {}
