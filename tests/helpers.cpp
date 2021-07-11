@@ -17,6 +17,21 @@ boost::ut::suite helpers = [] {
         expect(eq(nibble(nib::third, 0x1234), 0x3));
         expect(eq(nibble(nib::fourth, 0x1234), 0x4));
     };
+
+    "check byte_to_bitmap"_test = [] {
+        expect(eq(byte_to_bitmap(0b0), std::array{false, false, false, false,
+                                                  false, false, false, false}));
+        expect(eq(byte_to_bitmap(0b1), std::array{true, false, false, false,
+                                                  false, false, false, false}));
+        expect(eq(byte_to_bitmap(0b101), std::array{true, false, true, false,
+                                                  false, false, false, false}));
+        expect(eq(byte_to_bitmap(0b00010001), std::array{true, false, false, false,
+                                                  true, false, false, false}));
+        expect(eq(byte_to_bitmap(0b10010011), std::array{true, true, false, false,
+                                                  true, false, false, true}));
+        expect(eq(byte_to_bitmap(0b11111111), std::array{true, true, true, true,
+                                                  true, true, true, true}));
+    };
 };
 
 int main() {}

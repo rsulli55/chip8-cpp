@@ -18,7 +18,7 @@ boost::ut::suite instructions = [] {
     "00E0"_test = [&chip8] {
         chip8.execute(0x00E0);
         expect(chip8.screen_equal(
-            std::array<std::array<bool, 32>, 64>{std::array<bool, 32>{false}}));
+            std::array<std::array<bool, 64>, 32>{std::array<bool, 64>{false}}));
     };
 
     // Return from subroutine popping the PC from the stack
@@ -400,7 +400,20 @@ boost::ut::suite instructions = [] {
     // starting at the address stored in I
     // Set VF to 0x01 if any set pixels are changed to unset, and 00 otherwise
     "DXYN"_test = [&chip8] {
-        chip8.execute(0xDAB2);
+        // start of font
+        chip8.execute(0xA050);
+        // display character 0 at 0,0
+        chip8.execute(0xD005);
+        std::array<std::array<bool, 64>, 32> expected = {std::array<bool, 64> {false}};
+        std::array<u8, 5> font_zero { 0xF0, 0x90, 0x90, 0x90, 0xF0 };
+        auto modify = [&expected](u8 byte) {
+            auto bitmap = byte_to_bitmap(byte);
+            std::copy(std::cbegin(bitmap), std::cend(bitmap), std::begin(expected[0]));
+        };
+        std::for_each(std::cbegin(font_zero), std::cend(font_zero), modify);
+        spdlog::debug("DXYN_test: completed for each");
+        expect(chip8.screen_equal(expected));
+        spdlog::debug("After expect");
     };
 };
 

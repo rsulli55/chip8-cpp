@@ -1,6 +1,8 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
+#include <ranges>
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
@@ -8,7 +10,7 @@ using u32 = std::uint32_t;
 
 enum class nib { first, second, third, fourth };
 
-/// nibble returns the @param which nibble of @param what
+/// returns the @param which nibble of @param what
 inline u16 nibble(nib which, u16 what) {
     switch (which) {
     case nib::first:
@@ -21,4 +23,18 @@ inline u16 nibble(nib which, u16 what) {
         return 0x000F & what;
     }
     return 0x0;
+}
+
+/// converts a byte into an length 8 array of bools
+inline std::array<bool, 8> byte_to_bitmap(u8 byte) {
+    std::array<bool, 8> to_return = {false};
+
+    auto transformed =
+        std::views::iota(0u, 8u) | std::views::transform([&byte](u8 bit) {
+            return (byte & (1 << bit)) ? true : false;
+        });
+
+    std::copy(std::cbegin(transformed), std::cend(transformed),
+              std::begin(to_return));
+    return to_return;
 }
