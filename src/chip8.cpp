@@ -162,20 +162,25 @@ void inline Chip8::_ANNN(u16 opcode) noexcept { I_ = opcode & 0x0FFF; }
 // Draw sprite at position VX, VY with 0xN bytes of sprite data
 // starting at the address stored in I
 // Set VF to 0x01 if any set pixels are changed to unset, and 00 otherwise
-void inline Chip8::_DXYN(u16 opcode) noexcept { 
+void inline Chip8::_DXYN(u16 opcode) noexcept {
     // get x and y coords from VX, VY modulo screen size
     const auto x_start = V_[nibble(nib::second, opcode)] % SCREEN_WIDTH;
-    const auto x_end = std::min(static_cast<u16> (x_start + 8u), SCREEN_WIDTH);
+    const auto x_end = std::min(static_cast<u16>(x_start + 8u), SCREEN_WIDTH);
     const auto y_start = V_[nibble(nib::third, opcode)] % SCREEN_HEIGHT;
     const auto pixel_height = nibble(nib::fourth, opcode);
-    const auto y_end = std::min(static_cast<u16> (y_start + pixel_height), SCREEN_HEIGHT);
+    const auto y_end =
+        std::min(static_cast<u16>(y_start + pixel_height), SCREEN_HEIGHT);
 
-    spdlog::debug("In DXYN x_start = {}, x_end = {}, y_start = {}, y_end = {}", 
-            x_start, x_end, y_start, y_end);
+    spdlog::debug("In DXYN x_start = {}, x_end = {}, y_start = {}, y_end = {}",
+                  x_start, x_end, y_start, y_end);
     // TODO: More elegant solution for this?
-    // std::copy(std::cbegin(bitmap), std::cbegin(bitmap) + x_end, std::begin(row) + x_start);
-    /* std::for_each(std::begin(screen_) + y_start, std::begin(screen_) + y_end, fill_row); */
-    auto transform_row = [this, x_start, x_end, y_start](std::array<bool, SCREEN_WIDTH>& pixel_row, u16 row) {
+    // std::copy(std::cbegin(bitmap), std::cbegin(bitmap) + x_end,
+    // std::begin(row) + x_start);
+    /* std::for_each(std::begin(screen_) + y_start, std::begin(screen_) + y_end,
+     * fill_row); */
+    auto transform_row = [this, x_start, x_end,
+                          y_start](std::array<bool, SCREEN_WIDTH> &pixel_row,
+                                   u16 row) {
         const auto byte = memory_[I_ + row - y_start];
         spdlog::debug("In DXYN: loaded byte {:X} from memory", byte);
         spdlog::debug("In DXYN: row = {}", row);
@@ -183,26 +188,23 @@ void inline Chip8::_DXYN(u16 opcode) noexcept {
         // XOR bitmap with pixel_row and set VF if a pixel_row bit is unset
         for (auto col = x_start; col < x_end; ++col) {
             // pixel_row bit becomes unset if both bits are true
-            if (bitmap[col-x_start] && pixel_row[col]) {
+            if (bitmap[col - x_start] && pixel_row[col]) {
                 V_[0xF] = 0x1;
             }
 
-
-
             pixel_row[col] = (pixel_row[col] != bitmap[col - x_start]);
-            spdlog::debug("In DXYN: setting pixel_row[{}] to  {}", col, pixel_row[col]);
+            spdlog::debug("In DXYN: setting pixel_row[{}] to  {}", col,
+                          pixel_row[col]);
         }
     };
 
     // set VF to 0 before drawing sprite
     V_[0xF] = 0x0;
-    const auto rows = std::views::iota(static_cast<u16>(y_start), static_cast<u16>(y_end));
+    const auto rows =
+        std::views::iota(static_cast<u16>(y_start), static_cast<u16>(y_end));
     for (const auto row : rows) {
         transform_row(screen_[row], row);
     }
 
     spdlog::debug("Exiting DXYN");
 }
-
-    
-

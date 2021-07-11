@@ -97,21 +97,25 @@ class Chip8 {
         spdlog::set_level(level);
     }
 
-    auto screen_difference(const std::array<std::array<bool, SCREEN_WIDTH>, SCREEN_HEIGHT>& other)
-    const noexcept {
-         auto differences = std::array<std::array<bool, SCREEN_WIDTH>, SCREEN_HEIGHT>{};
-         auto compute_xor = [](const std::array<bool, SCREEN_WIDTH>& row1, 
-                 const std::array<bool, SCREEN_WIDTH>& row2) {
+    auto screen_difference(
+        const std::array<std::array<bool, SCREEN_WIDTH>, SCREEN_HEIGHT> &other)
+        const noexcept {
+        auto differences =
+            std::array<std::array<bool, SCREEN_WIDTH>, SCREEN_HEIGHT>{};
+        auto compute_xor = [](const std::array<bool, SCREEN_WIDTH> &row1,
+                              const std::array<bool, SCREEN_WIDTH> &row2) {
             auto xored = std::array<bool, SCREEN_WIDTH>{};
-            std::ranges::transform(row1, row2, std::begin(xored), [](bool b1, bool b2) { return b1 != b2; });
+            std::ranges::transform(row1, row2, std::begin(xored),
+                                   [](bool b1, bool b2) { return b1 != b2; });
 
             return xored;
-         };
+        };
 
-         std::ranges::transform(screen_, other, std::begin(differences), compute_xor);
+        std::ranges::transform(screen_, other, std::begin(differences),
+                               compute_xor);
 
-         return differences;
-     } 
+        return differences;
+    }
 
   private:
     // internal operations

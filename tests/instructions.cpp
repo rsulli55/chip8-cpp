@@ -72,7 +72,6 @@ boost::ut::suite instructions = [] {
         expect(eq(chip8.pc(), 0x0D1E));
     };
 
-
     // Store number 0xNN in register VX
     "6XNN"_test = [&chip8] {
         chip8.execute(0x6015);
@@ -407,12 +406,14 @@ boost::ut::suite instructions = [] {
         // display character 0 at 0,0
         chip8.execute(0x6000);
         chip8.execute(0xD005);
-        std::array<std::array<bool, 64>, 32> expected {std::array<bool, 64> {false}};
-        std::array<u8, 5> font_zero { 0xF0, 0x90, 0x90, 0x90, 0xF0 };
+        std::array<std::array<bool, 64>, 32> expected{
+            std::array<bool, 64>{false}};
+        std::array<u8, 5> font_zero{0xF0, 0x90, 0x90, 0x90, 0xF0};
         auto modify = [&expected](u8 byte, int row) {
             spdlog::debug("In modify: byte is {:x}", byte);
             auto bitmap = byte_to_bitmap(byte);
-            std::copy(std::cbegin(bitmap), std::cend(bitmap), std::begin(expected[row]));
+            std::copy(std::cbegin(bitmap), std::cend(bitmap),
+                      std::begin(expected[row]));
         };
         const auto rows = std::views::iota(0ul, font_zero.size());
         for (const auto row : rows) {
@@ -426,7 +427,8 @@ boost::ut::suite instructions = [] {
         chip8.execute(0x6000);
         chip8.execute(0xD005);
         // reset expected
-        std::fill(std::begin(expected), std::end(expected), std::array<bool, 64>{false});
+        std::fill(std::begin(expected), std::end(expected),
+                  std::array<bool, 64>{false});
         expect(chip8.screen_equal(expected));
         expect(eq(chip8.V(0xF), 0x1));
 
@@ -441,19 +443,21 @@ boost::ut::suite instructions = [] {
         // letter is shifted 8 pixels right and 4 pixels down
         chip8.execute(0xD015);
         // reset expected
-        std::fill(std::begin(expected), std::end(expected), std::array<bool, 64>{false});
+        std::fill(std::begin(expected), std::end(expected),
+                  std::array<bool, 64>{false});
 
         auto modify2 = [&expected](u8 byte, int row, int col_start) {
-            spdlog::debug("In modify2: byte is {:x}, row = {}, col_start = {}", byte, row, col_start);
+            spdlog::debug("In modify2: byte is {:x}, row = {}, col_start = {}",
+                          byte, row, col_start);
             auto bitmap = byte_to_bitmap(byte);
-            std::copy(std::cbegin(bitmap), std::cend(bitmap), std::begin(expected[row]) + col_start);
+            std::copy(std::cbegin(bitmap), std::cend(bitmap),
+                      std::begin(expected[row]) + col_start);
         };
         for (const auto row : rows) {
             modify2(font_zero[row], row + 4, 8);
         }
         expect(chip8.screen_equal(expected));
         expect(eq(chip8.V(0xF), 0x0));
-
 
         // check when a sprite gets cut off
         chip8.execute(0xA050);
@@ -466,7 +470,8 @@ boost::ut::suite instructions = [] {
         // letter is shifted 8 pixels right and 4 pixels down
         chip8.execute(0xD015);
         // reset expected
-        std::fill(std::begin(expected), std::end(expected), std::array<bool, 64>{false});
+        std::fill(std::begin(expected), std::end(expected),
+                  std::array<bool, 64>{false});
         // just modify expected by hand
         // Sprite 0 looks like the following
         // F0: 1 1 1 1 0 0 0 0
@@ -475,21 +480,21 @@ boost::ut::suite instructions = [] {
         // 90: 1 0 0 1 0 0 0 0
         // F0: 1 1 1 1 0 0 0 0
         // If we draw it at x = 59, y = 29 we should expect to see
-        // F0: 1 1 1 1 0 | 
+        // F0: 1 1 1 1 0 |
         // 90: 1 0 0 1 0 |
         // 90: 1 0 0 1 0 |
         // ---------------
         // F0
-        expected[31-2][63 - 1] = true;
-        expected[31-2][63 - 2] = true;
-        expected[31-2][63 - 3] = true;
-        expected[31-2][63 - 4] = true;
+        expected[31 - 2][63 - 1] = true;
+        expected[31 - 2][63 - 2] = true;
+        expected[31 - 2][63 - 3] = true;
+        expected[31 - 2][63 - 4] = true;
         // 90
-        expected[31-1][63 - 1] = true;
-        expected[31-1][63 - 4] = true;
+        expected[31 - 1][63 - 1] = true;
+        expected[31 - 1][63 - 4] = true;
         // 90
-        expected[31-0][63 - 1] = true;
-        expected[31-0][63 - 4] = true;
+        expected[31 - 0][63 - 1] = true;
+        expected[31 - 0][63 - 4] = true;
         expect(chip8.screen_equal(expected));
         expect(eq(chip8.V(0xF), 0x0));
 
@@ -499,13 +504,13 @@ boost::ut::suite instructions = [] {
             for (auto col = 0; col < 64; ++col) {
                 if (differences[row][col]) {
                     spdlog::debug("Difference at row {} and col {}", row, col);
-                    spdlog::debug("screen[{}][{}] = {}", row, col, screen[row][col]);
-                    spdlog::debug("expected[{}][{}] = {}", row, col, expected[row][col]);
+                    spdlog::debug("screen[{}][{}] = {}", row, col,
+                                  screen[row][col]);
+                    spdlog::debug("expected[{}][{}] = {}", row, col,
+                                  expected[row][col]);
                 }
             }
         }
-    
-
     };
 };
 

@@ -24,17 +24,21 @@ boost::ut::suite helpers = [] {
         expect(eq(byte_to_bitmap(0b1), std::array{false, false, false, false,
                                                   false, false, false, true}));
         expect(eq(byte_to_bitmap(0b101), std::array{false, false, false, false,
-                                                  false, true, false, true}));
-        expect(eq(byte_to_bitmap(0b00010001), std::array{false, false, false, true,
-                                                  false, false, false, true}));
-        expect(eq(byte_to_bitmap(0b10010011), std::array{true, false, false, true,
-                                                  false, false, true, true}));
-        expect(eq(byte_to_bitmap(0b11111111), std::array{true, true, true, true,
-                                                  true, true, true, true}));
-        expect(eq(byte_to_bitmap(0xF0), std::array{true, true, true, true,
-                                                  false, false, false, false}));
-        expect(eq(byte_to_bitmap(0x90), std::array{true, false, false, true,
-                                                  false, false, false, false}));
+                                                    false, true, false, true}));
+        expect(eq(
+            byte_to_bitmap(0b00010001),
+            std::array{false, false, false, true, false, false, false, true}));
+        expect(
+            eq(byte_to_bitmap(0b10010011),
+               std::array{true, false, false, true, false, false, true, true}));
+        expect(eq(byte_to_bitmap(0b11111111),
+                  std::array{true, true, true, true, true, true, true, true}));
+        expect(
+            eq(byte_to_bitmap(0xF0),
+               std::array{true, true, true, true, false, false, false, false}));
+        expect(
+            eq(byte_to_bitmap(0x90), std::array{true, false, false, true, false,
+                                                false, false, false}));
     };
 };
 

@@ -29,10 +29,11 @@ inline u16 nibble(nib which, u16 what) {
 inline std::array<bool, 8> byte_to_bitmap(u8 byte) {
     std::array<bool, 8> to_return = {false};
 
-    auto transformed =
-        std::views::iota(0u, 8u) | std::views::transform([&byte](u8 bit) {
-            return (byte & (1 << bit)) ? true : false;
-        }) | std::views::reverse;
+    auto transformed = std::views::iota(0u, 8u) |
+                       std::views::transform([&byte](u8 bit) {
+                           return (byte & (1 << bit)) ? true : false;
+                       }) |
+                       std::views::reverse;
 
     // reverse it
     std::copy(std::cbegin(transformed), std::cend(transformed),
