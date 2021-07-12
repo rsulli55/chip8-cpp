@@ -8,8 +8,8 @@
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
-#include <string_view>
 #include <fstream>
+#include <string_view>
 
 class Emu {
 
@@ -49,7 +49,8 @@ class Emu {
                               SDL_GetError());
                 return 20;
             } else {
-                renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED);
+                renderer_ =
+                    SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED);
                 return 0;
             }
         }
@@ -76,13 +77,15 @@ class Emu {
     void render() {
         SDL_RenderClear(renderer_);
         const auto &screen = chip8_.screen();
-        SDL_SetRenderDrawColor(renderer_, background_red, background_green, background_blue, 0);
+        SDL_SetRenderDrawColor(renderer_, background_red, background_green,
+                               background_blue, 0);
         SDL_RenderFillRect(renderer_, nullptr);
 
         auto rows = std::views::iota(0u, chip8_.SCREEN_HEIGHT);
         auto cols = std::views::iota(0u, chip8_.SCREEN_WIDTH);
 
-        SDL_SetRenderDrawColor(renderer_, pixel_red, pixel_green, pixel_blue, 0);
+        SDL_SetRenderDrawColor(renderer_, pixel_red, pixel_green, pixel_blue,
+                               0);
         for (const auto row : rows) {
             for (const auto col : cols) {
                 if (screen[row][col]) {
@@ -117,7 +120,7 @@ class Emu {
 
         // stackoverflow post:
         // https://stackoverflow.com/questions/15138353/how-to-read-a-binary-file-into-a-vector-of-unsigned-chars
-        std::ifstream rom {file_path, std::ios::binary};
+        std::ifstream rom{file_path, std::ios::binary};
         rom.unsetf(std::ios::skipws);
         // get size
         rom.seekg(0, std::ios::end);

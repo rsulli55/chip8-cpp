@@ -130,14 +130,16 @@ void inline Chip8::_2NNN(u16 opcode) noexcept {
 // Store 0xNN into register VX
 void inline Chip8::_6XNN(u16 opcode) noexcept {
     const auto second_nibble = nibble(nib::second, opcode);
-    spdlog::debug("In 6XNN: X = {:x}, NN = {:x}", second_nibble, opcode & 0x00FF);
+    spdlog::debug("In 6XNN: X = {:x}, NN = {:x}", second_nibble,
+                  opcode & 0x00FF);
     V_[second_nibble] = opcode & 0x00FF;
 }
 
 // Add value 0xNN to register VX
 void inline Chip8::_7XNN(u16 opcode) noexcept {
     const auto second_nibble = nibble(nib::second, opcode);
-    spdlog::debug("In 7XNN: X = {:x}, NN = {:x}", second_nibble, opcode & 0x00FF);
+    spdlog::debug("In 7XNN: X = {:x}, NN = {:x}", second_nibble,
+                  opcode & 0x00FF);
     V_[second_nibble] += opcode & 0x00FF;
 }
 
@@ -165,9 +167,9 @@ void inline Chip8::_8XY3(u16 opcode) noexcept {
     V_[second_nibble] ^= V_[third_nibble];
 }
 
-void inline Chip8::_ANNN(u16 opcode) noexcept { 
+void inline Chip8::_ANNN(u16 opcode) noexcept {
     spdlog::debug("In ANNN: NNN = {:x}", opcode & 0x0FFF);
-    I_ = opcode & 0x0FFF; 
+    I_ = opcode & 0x0FFF;
 }
 
 // Draw sprite at position VX, VY with 0xN bytes of sprite data

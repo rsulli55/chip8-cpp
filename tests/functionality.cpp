@@ -1,6 +1,6 @@
 #include <algorithm>
-#include <ranges>
 #include <boost/ut.hpp>
+#include <ranges>
 
 #include "../src/chip8.h"
 #include "../src/common.h"
@@ -12,9 +12,9 @@ boost::ut::suite functionality = [] {
     chip8.set_debug_level(spdlog::level::debug);
 
     "check load_rom"_test = [&chip8] {
-        std::vector<u8> data {0, 1, 2, 3, 4};
+        std::vector<u8> data{0, 1, 2, 3, 4};
         chip8.load_rom(data);
-        const auto& memory = chip8.memory();
+        const auto &memory = chip8.memory();
 
         auto counter = std::views::iota(0u, data.size());
         for (const auto i : counter) {
@@ -32,11 +32,11 @@ boost::ut::suite functionality = [] {
     };
 
     "check fetch"_test = [&chip8] {
-        std::vector<u8> data {0x00, 0x0F, 0xA0, 0x00, 0x10, 0xDE, 0xBA, 0x1A,
-                              0xAA, 0xAA};
+        std::vector<u8> data{0x00, 0x0F, 0xA0, 0x00, 0x10,
+                             0xDE, 0xBA, 0x1A, 0xAA, 0xAA};
         chip8.load_rom(data);
         auto pc = chip8.ROM_START;
-        
+
         expect(eq(chip8.pc(), pc));
         auto opcode = chip8.fetch();
         expect(eq(opcode, 0x0000F));
@@ -62,17 +62,8 @@ boost::ut::suite functionality = [] {
         expect(eq(opcode, 0xAAAA));
         pc += 2;
     };
-        
 };
 
 // TODO: Add some Emu tests
 
 int main() {}
-
-
-
-
-
-
-
-
