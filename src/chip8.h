@@ -13,54 +13,13 @@
 #include "common.h"
 
 class Chip8 {
-  private:
-    /// special registers
-    u16 pc_ = 0x200;
-    u16 I_ = 0x0;
-
-    // general purpose registers
-    std::array<u8, 16> V_ = {0x0};
-
-    // memory data
-    static constexpr u16 ROM_START = 0x200u;
-    std::array<u8, 4096> memory_ = {0x0}; // 4K memory
-
-    // font data
-    static constexpr u16 FONT_START = 0x50u;
-    static constexpr std::array<u8, 80> FONT = {
-        0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
-        0x20, 0x60, 0x20, 0x20, 0x70, // 1
-        0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
-        0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
-        0x90, 0x90, 0xF0, 0x10, 0x10, // 4
-        0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
-        0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
-        0xF0, 0x10, 0x20, 0x40, 0x40, // 7
-        0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
-        0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
-        0xF0, 0x90, 0xF0, 0x90, 0x90, // A
-        0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
-        0xF0, 0x80, 0x80, 0x80, 0xF0, // C
-        0xE0, 0x90, 0x90, 0x90, 0xE0, // D
-        0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
-        0xF0, 0x80, 0xF0, 0x80, 0x80  // F
-    };
-
-    // screen
-    static constexpr u16 SCREEN_WIDTH = 64;
-    static constexpr u16 SCREEN_HEIGHT = 32;
-    std::array<std::array<bool, SCREEN_WIDTH>, SCREEN_HEIGHT> screen_ = {
-        std::array<bool, SCREEN_WIDTH>{false}};
-
-    // stack
-    // used for storing 16-bit addresses
-    std::stack<u16> stack_;
-
-    // timers
-    u8 sound_ = 0x0;
-    u8 delay_ = 0x0;
-
   public:
+    // constants
+    static constexpr u32 SCREEN_WIDTH = 64;
+    static constexpr u32 SCREEN_HEIGHT = 32;
+    static constexpr u16 ROM_START = 0x200u;
+    static constexpr u16 MEMORY_SIZE = 4096u;
+
     Chip8() { initialize_font(); }
 
     u8 V(u8 reg) const noexcept { return V_[reg]; }
@@ -68,13 +27,23 @@ class Chip8 {
     u16 I() const noexcept { return I_; }
     const std::stack<u16> &stack() const noexcept { return stack_; }
     const auto &screen() const noexcept { return screen_; }
+    const auto &memory() const noexcept { return memory_; }
     u8 sound() const noexcept { return sound_; }
     u8 delay() const noexcept { return delay_; }
     bool bad_opcode() const noexcept { return bad_opcode_; }
 
-    void load_rom(std::array<u8, 3584> rom) noexcept {
-        std::copy(std::cbegin(rom), std::cend(rom),
+    void load_rom(const std::vector<u8> &rom) noexcept {
+        std::copy(std::cbegin(rom), std::cbegin(rom) + MEMORY_SIZE - ROM_START,
                   std::begin(memory_) + ROM_START);
+    }
+
+    u16 fetch() noexcept {
+        // opcodes stored in big endian
+        u8 upper_byte = memory_[pc_++];
+        u8 lower_byte = memory_[pc_++];
+        u16 opcode = (upper_byte << 8) + lower_byte;
+
+        return opcode;
     }
 
     void execute(u16 opcode) noexcept;
@@ -118,6 +87,48 @@ class Chip8 {
     }
 
   private:
+    /// special registers
+    u16 pc_ = ROM_START;
+    u16 I_ = 0x0;
+
+    // general purpose registers
+    std::array<u8, 16> V_ = {0x0};
+
+    // memory data
+    std::array<u8, MEMORY_SIZE> memory_ = {0x0}; // 4K memory
+
+    // font data
+    static constexpr u16 FONT_START = 0x50u;
+    static constexpr std::array<u8, 80> FONT = {
+        0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+        0x20, 0x60, 0x20, 0x20, 0x70, // 1
+        0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+        0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+        0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+        0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+        0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+        0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+        0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+        0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+        0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+        0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+        0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+        0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+        0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+        0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+    };
+
+    // screen
+    std::array<std::array<bool, SCREEN_WIDTH>, SCREEN_HEIGHT> screen_ = {
+        std::array<bool, SCREEN_WIDTH>{false}};
+
+    // stack
+    // used for storing 16-bit addresses
+    std::stack<u16> stack_;
+
+    // timers
+    u8 sound_ = 0x0;
+    u8 delay_ = 0x0;
     // internal operations
     void clear_screen() noexcept {
         std::ranges::fill(screen_, std::array<bool, SCREEN_WIDTH>{false});

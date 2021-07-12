@@ -7,6 +7,7 @@ void Chip8::execute(u16 opcode) noexcept {
     clear_bad_opcode();
 
     u16 first_nibble = nibble(nib::first, opcode);
+    spdlog::debug("In execute(): first_nibble = {:x}", first_nibble);
     switch (first_nibble) {
     case 0x0: {
         // 00E0 instruction
@@ -93,16 +94,19 @@ void Chip8::execute(u16 opcode) noexcept {
 // instructions
 // Execute machine language instruction, UNIMPLEMENTED
 void inline Chip8::_0NNN([[maybe_unused]] u16 opcode) noexcept {
+    spdlog::debug("In 0NNN: NNN = {:x}", opcode & 0x0FFF);
     bad_opcode_ = true;
 }
 
 // Clear the screen
 void inline Chip8::_00E0([[maybe_unused]] u16 opcode) noexcept {
+    spdlog::debug("In 00E0");
     clear_screen();
 }
 
 // Return from subroutine popping from stack and setting PC
 void inline Chip8::_00EE([[maybe_unused]] u16 opcode) noexcept {
+    spdlog::debug("In 00EE");
     assert(stack_.size() > 0);
     pc_ = stack_.top();
     stack_.pop();
@@ -110,12 +114,14 @@ void inline Chip8::_00EE([[maybe_unused]] u16 opcode) noexcept {
 
 // Jump to address 0xNNN
 void inline Chip8::_1NNN(u16 opcode) noexcept {
+    spdlog::debug("In 1NNN: NNN = {:x}", opcode & 0x0FFF);
     u16 address = 0x0FFF & opcode;
     pc_ = address;
 }
 
 // Execute subroutine at address 0xNNN pushing current PC onto stack
 void inline Chip8::_2NNN(u16 opcode) noexcept {
+    spdlog::debug("In 2NNN: NNN = {:x}", opcode & 0x0FFF);
     stack_.push(pc_);
     u16 address = 0x0FFF & opcode;
     pc_ = address;
@@ -124,12 +130,14 @@ void inline Chip8::_2NNN(u16 opcode) noexcept {
 // Store 0xNN into register VX
 void inline Chip8::_6XNN(u16 opcode) noexcept {
     const auto second_nibble = nibble(nib::second, opcode);
+    spdlog::debug("In 6XNN: X = {:x}, NN = {:x}", second_nibble, opcode & 0x00FF);
     V_[second_nibble] = opcode & 0x00FF;
 }
 
 // Add value 0xNN to register VX
 void inline Chip8::_7XNN(u16 opcode) noexcept {
     const auto second_nibble = nibble(nib::second, opcode);
+    spdlog::debug("In 7XNN: X = {:x}, NN = {:x}", second_nibble, opcode & 0x00FF);
     V_[second_nibble] += opcode & 0x00FF;
 }
 
@@ -157,7 +165,10 @@ void inline Chip8::_8XY3(u16 opcode) noexcept {
     V_[second_nibble] ^= V_[third_nibble];
 }
 
-void inline Chip8::_ANNN(u16 opcode) noexcept { I_ = opcode & 0x0FFF; }
+void inline Chip8::_ANNN(u16 opcode) noexcept { 
+    spdlog::debug("In ANNN: NNN = {:x}", opcode & 0x0FFF);
+    I_ = opcode & 0x0FFF; 
+}
 
 // Draw sprite at position VX, VY with 0xN bytes of sprite data
 // starting at the address stored in I
@@ -165,11 +176,11 @@ void inline Chip8::_ANNN(u16 opcode) noexcept { I_ = opcode & 0x0FFF; }
 void inline Chip8::_DXYN(u16 opcode) noexcept {
     // get x and y coords from VX, VY modulo screen size
     const auto x_start = V_[nibble(nib::second, opcode)] % SCREEN_WIDTH;
-    const auto x_end = std::min(static_cast<u16>(x_start + 8u), SCREEN_WIDTH);
+    const auto x_end = std::min(static_cast<u32>(x_start + 8u), SCREEN_WIDTH);
     const auto y_start = V_[nibble(nib::third, opcode)] % SCREEN_HEIGHT;
     const auto pixel_height = nibble(nib::fourth, opcode);
     const auto y_end =
-        std::min(static_cast<u16>(y_start + pixel_height), SCREEN_HEIGHT);
+        std::min(static_cast<u32>(y_start + pixel_height), SCREEN_HEIGHT);
 
     spdlog::debug("In DXYN x_start = {}, x_end = {}, y_start = {}, y_end = {}",
                   x_start, x_end, y_start, y_end);
