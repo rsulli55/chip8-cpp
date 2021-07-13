@@ -13,9 +13,8 @@
 
 class Emu {
 
-    public:
+  public:
     enum class State { Debug, Pause, Run };
-
 
   private:
     SDL_Window *window_ = nullptr;
@@ -45,17 +44,14 @@ class Emu {
 
     u32 init_SDL();
 
-
   public:
     Emu(u8 screen_scale, State state);
     ~Emu();
-
 
     void run();
     void cycle_forward(u8 cycles_remaining);
     void render();
     void step();
-    u8 handle_event(const SDL_Event& event);
-    std::vector<u8> load_rom_file(const std::string_view& path);
-
+    u8 handle_event(const SDL_Event &event);
+    std::vector<u8> load_rom_file(const std::string_view &path);
 };

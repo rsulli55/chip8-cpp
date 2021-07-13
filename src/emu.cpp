@@ -1,11 +1,9 @@
 #include "emu.h"
 #include <SDL_render.h>
 
-
 u32 Emu::init_SDL() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        spdlog::error("Could not initialize SDL\nError: %s\n",
-                      SDL_GetError());
+        spdlog::error("Could not initialize SDL\nError: %s\n", SDL_GetError());
         return 10;
     }
 
@@ -17,15 +15,14 @@ u32 Emu::init_SDL() {
         spdlog::error("Window could not be created!\nError: %s\n",
                       SDL_GetError());
         return 20;
-    } 
-    renderer_ =
-        SDL_CreateRenderer(window_, -1, 
-                SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    }
+    renderer_ = SDL_CreateRenderer(
+        window_, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!renderer_) {
         spdlog::error("Renderer could not be created!\nError: %s\n",
                       SDL_GetError());
         return 30;
-    } 
+    }
 
     return 0;
 }
@@ -56,8 +53,7 @@ void Emu::render() {
     auto rows = std::views::iota(0u, chip8_.SCREEN_HEIGHT);
     auto cols = std::views::iota(0u, chip8_.SCREEN_WIDTH);
 
-    SDL_SetRenderDrawColor(renderer_, pixel_red, pixel_green, pixel_blue,
-                           0);
+    SDL_SetRenderDrawColor(renderer_, pixel_red, pixel_green, pixel_blue, 0);
     for (const auto row : rows) {
         for (const auto col : cols) {
             if (screen[row][col]) {
@@ -88,32 +84,30 @@ void Emu::cycle_forward(u8 cycles_remaining) {
 }
 
 /// return the number of chip8 instructions executed
-u8 Emu::handle_event(const SDL_Event& event) {
+u8 Emu::handle_event(const SDL_Event &event) {
     u8 instructions_executed = 0;
 
     switch (event.type) {
-        case SDL_QUIT:
-            spdlog::debug("Received SDL_QUIT, exiting.");
-            running_ = false;
-            break;
+    case SDL_QUIT:
+        spdlog::debug("Received SDL_QUIT, exiting.");
+        running_ = false;
+        break;
 
-        case SDL_KEYDOWN:
-            Uint8 const *keys = SDL_GetKeyboardState(nullptr);
+    case SDL_KEYDOWN:
+        Uint8 const *keys = SDL_GetKeyboardState(nullptr);
 
-            if (chip8_paused_ && keys[SDL_SCANCODE_N] == 1) {
-                spdlog::debug("Keydown event: N");
-                chip8_.cycle();
-                instructions_executed++;
-            }
-            else if (chip8_paused_ && keys[SDL_SCANCODE_R] == 1) {
-                spdlog::debug("Keydown event: R");
-                chip8_paused_ = false;
-            }
-            else if (keys[SDL_SCANCODE_P] == 1) {
-                spdlog::debug("Keydown event: P");
-                chip8_paused_ = true;
-            }
-            break;
+        if (chip8_paused_ && keys[SDL_SCANCODE_N] == 1) {
+            spdlog::debug("Keydown event: N");
+            chip8_.cycle();
+            instructions_executed++;
+        } else if (chip8_paused_ && keys[SDL_SCANCODE_R] == 1) {
+            spdlog::debug("Keydown event: R");
+            chip8_paused_ = false;
+        } else if (keys[SDL_SCANCODE_P] == 1) {
+            spdlog::debug("Keydown event: P");
+            chip8_paused_ = true;
+        }
+        break;
     }
 
     return instructions_executed;
@@ -155,8 +149,7 @@ std::vector<u8> Emu::load_rom_file(const std::string_view &path) {
     fs::path file_path{path};
 
     if (!fs::is_regular_file(file_path)) {
-        spdlog::error("Rom File: {} is not a regular file",
-                      file_path.string());
+        spdlog::error("Rom File: {} is not a regular file", file_path.string());
         return std::vector<u8>{};
     }
 
