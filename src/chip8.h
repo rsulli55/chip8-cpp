@@ -49,6 +49,12 @@ class Chip8 {
 
     void execute(u16 opcode) noexcept;
 
+    void cycle() noexcept {
+        auto opcode = fetch();
+        spdlog::debug("opcode = {:x}", opcode);
+        execute(opcode);
+    }
+
     bool screen_equal(const std::array<std::array<bool, SCREEN_WIDTH>,
                                        SCREEN_HEIGHT> &other) const noexcept {
         spdlog::debug("In screen_equal");
