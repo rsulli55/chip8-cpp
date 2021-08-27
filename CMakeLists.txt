@@ -19,9 +19,5 @@ endif()
 conan_basic_setup(TARGETS)
 
 add_subdirectory(tests)
+add_subdirectory(src)
 
-add_executable(chip8_cpp src/main.cpp src/chip8.cpp src/emu.cpp)
-set_property(TARGET chip8_cpp
-    PROPERTY CXX_STANDARD 20)
-conan_target_link_libraries(chip8_cpp CONAN_PKG::spdlog CONAN_PKG::sdl2 CONAN_PKG::pulseaudio)
-target_link_libraries(chip8_cpp -fsanitize=address)
