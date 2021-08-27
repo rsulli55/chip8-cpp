@@ -221,3 +221,4 @@ void inline Chip8::_DXYN(u16 opcode) noexcept {
 
     spdlog::debug("Exiting DXYN");
 }
+

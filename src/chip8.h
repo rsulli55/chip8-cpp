@@ -15,8 +15,8 @@
 class Chip8 {
   public:
     // constants
-    static constexpr u32 SCREEN_WIDTH = 64;
-    static constexpr u32 SCREEN_HEIGHT = 32;
+    static constexpr u32 SCREEN_WIDTH = 64u;
+    static constexpr u32 SCREEN_HEIGHT = 32u;
     static constexpr u16 ROM_START = 0x200u;
     static constexpr u16 MEMORY_SIZE = 4096u;
 
@@ -126,6 +126,7 @@ class Chip8 {
     };
 
     // screen
+    /* std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> screen_ = {false}; */
     std::array<std::array<bool, SCREEN_WIDTH>, SCREEN_HEIGHT> screen_ = {
         std::array<bool, SCREEN_WIDTH>{false}};
 
@@ -165,3 +166,13 @@ class Chip8 {
     // bad instruction flag
     bool bad_opcode_ = false;
 };
+
+constexpr u32 row_col_to_screen_index(u32 row, u32 col) {
+    return row * Chip8::SCREEN_WIDTH + col;
+}
+
+constexpr std::pair<u32, u32> screen_index_to_row_col(u32 index) {
+    const auto row = index / Chip8::SCREEN_WIDTH;
+    const auto col = index - row * Chip8::SCREEN_WIDTH;
+    return {row, col};
+}
