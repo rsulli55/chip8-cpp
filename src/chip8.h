@@ -33,8 +33,9 @@ class Chip8 {
     bool bad_opcode() const noexcept { return bad_opcode_; }
 
     void load_rom(const std::vector<u8> &rom) noexcept {
-        std::copy(std::cbegin(rom), std::cbegin(rom) + MEMORY_SIZE - ROM_START,
-                  std::begin(memory_) + ROM_START);
+        const auto end = std::min(std::cend(rom),
+                                  std::cbegin(rom) + MEMORY_SIZE - ROM_START);
+        std::copy(std::cbegin(rom), end, std::begin(memory_) + ROM_START);
     }
 
     u16 fetch() noexcept {
@@ -47,6 +48,12 @@ class Chip8 {
     }
 
     void execute(u16 opcode) noexcept;
+
+    void cycle() noexcept {
+        auto opcode = fetch();
+        spdlog::debug("opcode = {:x}", opcode);
+        execute(opcode);
+    }
 
     bool screen_equal(const std::array<std::array<bool, SCREEN_WIDTH>,
                                        SCREEN_HEIGHT> &other) const noexcept {
