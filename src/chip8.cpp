@@ -186,37 +186,27 @@ void inline Chip8::_DXYN(u16 opcode) noexcept {
 
     spdlog::debug("In DXYN x_start = {}, x_end = {}, y_start = {}, y_end = {}",
                   x_start, x_end, y_start, y_end);
+
+    // set VF to 0 before drawing sprite
+    V_[0xF] = 0x0;
+
     // TODO: More elegant solution for this?
-    // std::copy(std::cbegin(bitmap), std::cbegin(bitmap) + x_end,
-    // std::begin(row) + x_start);
-    /* std::for_each(std::begin(screen_) + y_start, std::begin(screen_) + y_end,
-     * fill_row); */
-    auto transform_row = [this, x_start, x_end,
-                          y_start](std::array<bool, SCREEN_WIDTH> &pixel_row,
-                                   u16 row) {
+    // The tricky part is keeping track of the state to set VF if needed
+    for (auto row = y_start; row < y_end; ++row) {
         const auto byte = memory_[I_ + row - y_start];
-        spdlog::debug("In DXYN: loaded byte {:X} from memory", byte);
-        spdlog::debug("In DXYN: row = {}", row);
         const auto bitmap = byte_to_bitmap(byte);
         // XOR bitmap with pixel_row and set VF if a pixel_row bit is unset
         for (auto col = x_start; col < x_end; ++col) {
             // pixel_row bit becomes unset if both bits are true
-            if (bitmap[col - x_start] && pixel_row[col]) {
+            auto screen_ind = row_col_to_screen_index(row, col);
+            if (bitmap[col - x_start] && screen_[screen_ind]) {
                 V_[0xF] = 0x1;
             }
 
-            pixel_row[col] = (pixel_row[col] != bitmap[col - x_start]);
-            spdlog::debug("In DXYN: setting pixel_row[{}] to  {}", col,
-                          pixel_row[col]);
+            screen_[screen_ind] = (screen_[screen_ind] != bitmap[col - x_start]);
+            spdlog::debug("In DXYN: setting screen_[{}, {}] to  {}", row, col,
+                          screen_[screen_ind]);
         }
-    };
-
-    // set VF to 0 before drawing sprite
-    V_[0xF] = 0x0;
-    const auto rows =
-        std::views::iota(static_cast<u16>(y_start), static_cast<u16>(y_end));
-    for (const auto row : rows) {
-        transform_row(screen_[row], row);
     }
 
     spdlog::debug("Exiting DXYN");

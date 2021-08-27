@@ -55,18 +55,8 @@ class Chip8 {
         execute(opcode);
     }
 
-    bool screen_equal(const std::array<std::array<bool, SCREEN_WIDTH>,
-                                       SCREEN_HEIGHT> &other) const noexcept {
-        spdlog::debug("In screen_equal");
-        auto intermediate = std::views::iota(0u, SCREEN_HEIGHT) |
-                            std::views::transform([this, &other](u16 i) {
-                                return std::ranges::equal(screen_[i], other[i]);
-                            });
-
-        spdlog::debug("In screen_equal: finished intermediate");
-        return std::ranges::all_of(std::cbegin(intermediate),
-                                   std::cend(intermediate),
-                                   [](bool b) { return b; });
+    bool screen_equal(const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other) const noexcept {
+        return std::ranges::equal(screen_, other);
     }
 
     void set_debug_level(spdlog::level::level_enum level) {
@@ -74,21 +64,13 @@ class Chip8 {
     }
 
     auto screen_difference(
-        const std::array<std::array<bool, SCREEN_WIDTH>, SCREEN_HEIGHT> &other)
+        const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other)
         const noexcept {
-        auto differences =
-            std::array<std::array<bool, SCREEN_WIDTH>, SCREEN_HEIGHT>{};
-        auto compute_xor = [](const std::array<bool, SCREEN_WIDTH> &row1,
-                              const std::array<bool, SCREEN_WIDTH> &row2) {
-            auto xored = std::array<bool, SCREEN_WIDTH>{};
-            std::ranges::transform(row1, row2, std::begin(xored),
-                                   [](bool b1, bool b2) { return b1 != b2; });
-
-            return xored;
+        auto differences = std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> {false};
+        auto compute_xor = [](const bool b1, const bool b2) {
+            return b1 != b2;
         };
-
-        std::ranges::transform(screen_, other, std::begin(differences),
-                               compute_xor);
+        std::ranges::transform(screen_, other, std::begin(differences), compute_xor);
 
         return differences;
     }
@@ -126,9 +108,7 @@ class Chip8 {
     };
 
     // screen
-    /* std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> screen_ = {false}; */
-    std::array<std::array<bool, SCREEN_WIDTH>, SCREEN_HEIGHT> screen_ = {
-        std::array<bool, SCREEN_WIDTH>{false}};
+    std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> screen_ = {false};
 
     // stack
     // used for storing 16-bit addresses
@@ -139,7 +119,7 @@ class Chip8 {
     u8 delay_ = 0x0;
     // internal operations
     void clear_screen() noexcept {
-        std::ranges::fill(screen_, std::array<bool, SCREEN_WIDTH>{false});
+        std::ranges::fill(screen_, false);
     }
     void clear_bad_opcode() noexcept { bad_opcode_ = false; }
     void initialize_font() noexcept {

@@ -3,6 +3,15 @@
 #include "../src/chip8.h"
 #include "../src/common.h"
 
+// helper function to copy a byte size bitmap to a screen sized array
+void copy_bitmap(std::array<bool, 8> bitmap, u32 row_start, u32 col_start,
+        std::array<bool, Chip8::SCREEN_WIDTH * Chip8::SCREEN_HEIGHT>& screen) {
+    auto screen_ind = row_col_to_screen_index(row_start, col_start);
+    std::copy(std::cbegin(bitmap), std::cend(bitmap), 
+            std::begin(screen) + screen_ind);
+}
+
+
 boost::ut::suite instructions = [] {
     using namespace boost::ut;
     Chip8 chip8;
@@ -18,7 +27,7 @@ boost::ut::suite instructions = [] {
     "00E0"_test = [&chip8] {
         chip8.execute(0x00E0);
         expect(chip8.screen_equal(
-            std::array<std::array<bool, 64>, 32>{std::array<bool, 64>{false}}));
+            std::array<bool, Chip8::SCREEN_WIDTH * Chip8::SCREEN_HEIGHT>{false}));
     };
 
     // Return from subroutine popping the PC from the stack
@@ -406,14 +415,12 @@ boost::ut::suite instructions = [] {
         // display character 0 at 0,0
         chip8.execute(0x6000);
         chip8.execute(0xD005);
-        std::array<std::array<bool, 64>, 32> expected{
-            std::array<bool, 64>{false}};
+        std::array<bool, Chip8::SCREEN_WIDTH * Chip8::SCREEN_HEIGHT> expected { false};
         std::array<u8, 5> font_zero{0xF0, 0x90, 0x90, 0x90, 0xF0};
         auto modify = [&expected](u8 byte, int row) {
             spdlog::debug("In modify: byte is {:x}", byte);
             auto bitmap = byte_to_bitmap(byte);
-            std::copy(std::cbegin(bitmap), std::cend(bitmap),
-                      std::begin(expected[row]));
+            copy_bitmap(bitmap, row, 0, expected);
         };
         const auto rows = std::views::iota(0ul, font_zero.size());
         for (const auto row : rows) {
@@ -427,8 +434,7 @@ boost::ut::suite instructions = [] {
         chip8.execute(0x6000);
         chip8.execute(0xD005);
         // reset expected
-        std::fill(std::begin(expected), std::end(expected),
-                  std::array<bool, 64>{false});
+        std::fill(std::begin(expected), std::end(expected), false);
         expect(chip8.screen_equal(expected));
         expect(eq(chip8.V(0xF), 0x1));
 
@@ -443,15 +449,13 @@ boost::ut::suite instructions = [] {
         // letter is shifted 8 pixels right and 4 pixels down
         chip8.execute(0xD015);
         // reset expected
-        std::fill(std::begin(expected), std::end(expected),
-                  std::array<bool, 64>{false});
+        std::fill(std::begin(expected), std::end(expected), false);
 
         auto modify2 = [&expected](u8 byte, int row, int col_start) {
             spdlog::debug("In modify2: byte is {:x}, row = {}, col_start = {}",
                           byte, row, col_start);
             auto bitmap = byte_to_bitmap(byte);
-            std::copy(std::cbegin(bitmap), std::cend(bitmap),
-                      std::begin(expected[row]) + col_start);
+            copy_bitmap(bitmap, row, col_start, expected);
         };
         for (const auto row : rows) {
             modify2(font_zero[row], row + 4, 8);
@@ -469,9 +473,9 @@ boost::ut::suite instructions = [] {
         chip8.execute(0x00E0);
         // letter is shifted 8 pixels right and 4 pixels down
         chip8.execute(0xD015);
+
         // reset expected
-        std::fill(std::begin(expected), std::end(expected),
-                  std::array<bool, 64>{false});
+        std::fill(std::begin(expected), std::end(expected), false);
         // just modify expected by hand
         // Sprite 0 looks like the following
         // F0: 1 1 1 1 0 0 0 0
@@ -485,33 +489,36 @@ boost::ut::suite instructions = [] {
         // 90: 1 0 0 1 0 |
         // ---------------
         // F0
-        expected[31 - 2][63 - 1] = true;
-        expected[31 - 2][63 - 2] = true;
-        expected[31 - 2][63 - 3] = true;
-        expected[31 - 2][63 - 4] = true;
+        expected[row_col_to_screen_index(Chip8::SCREEN_HEIGHT - 3, Chip8::SCREEN_WIDTH - 2)] = true;
+        expected[row_col_to_screen_index(Chip8::SCREEN_HEIGHT - 3, Chip8::SCREEN_WIDTH - 3)] = true;
+        expected[row_col_to_screen_index(Chip8::SCREEN_HEIGHT - 3, Chip8::SCREEN_WIDTH - 4)] = true;
+        expected[row_col_to_screen_index(Chip8::SCREEN_HEIGHT - 3, Chip8::SCREEN_WIDTH - 5)] = true;
         // 90
-        expected[31 - 1][63 - 1] = true;
-        expected[31 - 1][63 - 4] = true;
+        expected[row_col_to_screen_index(Chip8::SCREEN_HEIGHT - 2, Chip8::SCREEN_WIDTH - 2)] = true;
+        expected[row_col_to_screen_index(Chip8::SCREEN_HEIGHT - 2, Chip8::SCREEN_WIDTH - 5)] = true;
         // 90
-        expected[31 - 0][63 - 1] = true;
-        expected[31 - 0][63 - 4] = true;
+        expected[row_col_to_screen_index(Chip8::SCREEN_HEIGHT - 1, Chip8::SCREEN_WIDTH - 2)] = true;
+        expected[row_col_to_screen_index(Chip8::SCREEN_HEIGHT - 1, Chip8::SCREEN_WIDTH - 5)] = true;
         expect(chip8.screen_equal(expected));
         expect(eq(chip8.V(0xF), 0x0));
 
-        const auto differences = chip8.screen_difference(expected);
-        const auto screen = chip8.screen();
-        for (auto row = 0; row < 32; ++row) {
-            for (auto col = 0; col < 64; ++col) {
-                if (differences[row][col]) {
-                    spdlog::debug("Difference at row {} and col {}", row, col);
-                    spdlog::debug("screen[{}][{}] = {}", row, col,
-                                  screen[row][col]);
-                    spdlog::debug("expected[{}][{}] = {}", row, col,
-                                  expected[row][col]);
-                }
-            }
-        }
+
+        // used to display screen differences if a check fails
+        /* const auto differences = chip8.screen_difference(expected); */
+        /* const auto screen = chip8.screen(); */
+        /* for (auto row = 0; row < 32; ++row) { */
+        /*     for (auto col = 0; col < 64; ++col) { */
+        /*         if (differences[row][col]) { */
+        /*             spdlog::debug("Difference at row {} and col {}", row, col); */
+        /*             spdlog::debug("screen[{}][{}] = {}", row, col, */
+        /*                           screen[row][col]); */
+        /*             spdlog::debug("expected[{}][{}] = {}", row, col, */
+        /*                           expected[row][col]); */
+        /*         } */
+        /*     } */
+        /* } */
     };
 };
+
 
 int main() {}

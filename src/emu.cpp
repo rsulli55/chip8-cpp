@@ -56,7 +56,8 @@ void Emu::render() {
     SDL_SetRenderDrawColor(renderer_, pixel_red, pixel_green, pixel_blue, 0);
     for (const auto row : rows) {
         for (const auto col : cols) {
-            if (screen[row][col]) {
+            auto screen_ind = row_col_to_screen_index(row, col);
+            if (screen[screen_ind]) {
                 SDL_Rect rect = {.x = static_cast<int>(col * screen_scale_),
                                  .y = static_cast<int>(row * screen_scale_),
                                  .w = screen_scale_,
