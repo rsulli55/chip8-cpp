@@ -145,7 +145,12 @@ void Emu::run() {
     }
 }
 
-std::vector<u8> Emu::load_rom_file(const std::string_view &path) {
+void Emu::load_rom(const Rom &rom) {
+    chip8_.load_rom(rom);
+}
+
+
+Rom read_rom_file(const std::string_view &path) {
     namespace fs = std::filesystem;
     fs::path file_path{path};
 
@@ -156,17 +161,22 @@ std::vector<u8> Emu::load_rom_file(const std::string_view &path) {
 
     // stackoverflow post:
     // https://stackoverflow.com/questions/15138353/how-to-read-a-binary-file-into-a-vector-of-unsigned-chars
-    std::ifstream rom{file_path, std::ios::binary};
+    std::ifstream rom{file_path, std::ios::binary | std::ios::ate};
+    // don't skip whitespace
     rom.unsetf(std::ios::skipws);
     // get size
     rom.seekg(0, std::ios::end);
     const auto size = rom.tellg();
-    rom.seekg(0, std::ios::beg);
 
+    if (size < 0) {
+        spdlog::error("Rom File: {} has size less than zero", file_path.string());
+        return Rom{0};
+    }
     spdlog::debug("Rom {} size: {}", path, size);
 
-    // make vector and insert
-    std::vector<u8> rom_data(size);
+    std::vector<u8> rom_data(static_cast<size_t>(size));
+    // return to beginning and copy
+    rom.seekg(0, std::ios::beg);
     std::copy(std::istream_iterator<u8>(rom), std::istream_iterator<u8>(),
               std::begin(rom_data));
 
@@ -175,8 +185,5 @@ std::vector<u8> Emu::load_rom_file(const std::string_view &path) {
         spdlog::debug("byte {}: {}", i, rom_data[i]);
     }
 
-    // TODO: Refactor?
-    chip8_.load_rom(rom_data);
-    chip8_.set_debug_level(spdlog::level::debug);
-    return rom_data;
+    return Rom{std::move(rom_data)};
 }

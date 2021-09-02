@@ -9,7 +9,7 @@ boost::ut::suite functionality = [] {
     using namespace boost::ut;
 
     Chip8 chip8;
-    chip8.set_debug_level(spdlog::level::debug);
+    spdlog::set_level(spdlog::level::debug);
 
     "check row_col_to_screen_index"_test = [] {
         expect(eq(0u, row_col_to_screen_index(0, 0)));

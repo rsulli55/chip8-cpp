@@ -2,6 +2,7 @@
 #include "spdlog/spdlog.h"
 
 #include "chip8.h"
+#include "rom.h"
 #include "common.h"
 #include <SDL_pixels.h>
 #include <SDL_render.h>
@@ -48,11 +49,12 @@ class Emu {
     Emu(u8 screen_scale, State state);
     ~Emu();
 
+    void load_rom(const Rom& rom);
     void run();
     void cycle_forward(u8 cycles_remaining);
     void render();
     void step();
     u8 handle_event(const SDL_Event &event);
-    // TODO: move this to a free function
-    std::vector<u8> load_rom_file(const std::string_view &path);
 };
+
+Rom read_rom_file(const std::string_view &path);

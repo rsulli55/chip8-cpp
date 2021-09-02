@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <ranges>
 
+#include "spdlog/spdlog.h"
+
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
 using u32 = std::uint32_t;
@@ -40,3 +42,4 @@ inline std::array<bool, 8> byte_to_bitmap(u8 byte) {
               std::begin(to_return));
     return to_return;
 }
+

@@ -15,7 +15,7 @@ void copy_bitmap(std::array<bool, 8> bitmap, u32 row_start, u32 col_start,
 boost::ut::suite instructions = [] {
     using namespace boost::ut;
     Chip8 chip8;
-    chip8.set_debug_level(spdlog::level::debug);
+    spdlog::set_level(spdlog::level::debug);
 
     // Execute machine instruction at 0xNNN, which is unimplemented
     "0NNN"_test = [&chip8] {

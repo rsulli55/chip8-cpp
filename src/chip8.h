@@ -11,6 +11,7 @@
 #include "spdlog/spdlog.h"
 
 #include "common.h"
+#include "rom.h"
 
 class Chip8 {
   public:
@@ -32,10 +33,11 @@ class Chip8 {
     u8 delay() const noexcept { return delay_; }
     bool bad_opcode() const noexcept { return bad_opcode_; }
 
-    void load_rom(const std::vector<u8> &rom) noexcept {
-        const auto end = std::min(std::cend(rom),
-                                  std::cbegin(rom) + MEMORY_SIZE - ROM_START);
-        std::copy(std::cbegin(rom), end, std::begin(memory_) + ROM_START);
+    void load_rom(const Rom& rom) noexcept {
+        const auto& data = rom.data_;
+        const auto end = std::min(std::cend(data),
+                                  std::cbegin(data) + MEMORY_SIZE - ROM_START);
+        std::copy(std::cbegin(data), end, std::begin(memory_) + ROM_START);
     }
 
     u16 fetch() noexcept {
@@ -59,10 +61,6 @@ class Chip8 {
         return std::ranges::equal(screen_, other);
     }
 
-    // TODO: move this to a free function
-    void set_debug_level(spdlog::level::level_enum level) {
-        spdlog::set_level(level);
-    }
 
     auto screen_difference(
         const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other)
