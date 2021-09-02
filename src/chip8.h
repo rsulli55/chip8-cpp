@@ -59,6 +59,7 @@ class Chip8 {
         return std::ranges::equal(screen_, other);
     }
 
+    // TODO: move this to a free function
     void set_debug_level(spdlog::level::level_enum level) {
         spdlog::set_level(level);
     }

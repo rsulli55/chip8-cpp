@@ -53,5 +53,6 @@ class Emu {
     void render();
     void step();
     u8 handle_event(const SDL_Event &event);
+    // TODO: move this to a free function
     std::vector<u8> load_rom_file(const std::string_view &path);
 };
