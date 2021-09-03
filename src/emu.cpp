@@ -1,73 +1,104 @@
 #include "emu.h"
-#include <SDL_render.h>
+#include "SDL.h"
+#include "glbinding/glbinding.h"
+#include "imgui.h"
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_sdl.h"
 
-u32 Emu::init_SDL() {
+u32 Emu::init_video() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         spdlog::error("Could not initialize SDL\nError: %s\n", SDL_GetError());
         return 10;
     }
 
-    window_ = SDL_CreateWindow(WINDOW_NAME, SDL_WINDOWPOS_UNDEFINED,
-                               SDL_WINDOWPOS_UNDEFINED, screen_width_,
-                               screen_height_, SDL_WINDOW_SHOWN);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                        SDL_GL_CONTEXT_PROFILE_CORE);
+
+    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+    SDL_Window* window = SDL_CreateWindow(WINDOW_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+            window_width_, window_height_, window_flags);
 
     if (!window_) {
         spdlog::error("Window could not be created!\nError: %s\n",
                       SDL_GetError());
         return 20;
     }
-    renderer_ = SDL_CreateRenderer(
-        window_, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (!renderer_) {
-        spdlog::error("Renderer could not be created!\nError: %s\n",
-                      SDL_GetError());
-        return 30;
-    }
+
+    SDL_GLContext gl_context = SDL_GL_CreateContext(window);
+    SDL_GL_MakeCurrent(window, gl_context);
+    SDL_GL_SetSwapInterval(1); // Enable vsync
+
+    glbinding::initialize([](const char* name) { return (glbinding::ProcAddress)SDL_GL_GetProcAddress(name); });
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
+    ImGui_ImplOpenGL3_Init(glsl_version);
 
     return 0;
 }
+
 Emu::Emu(u8 screen_scale, State state)
     : screen_scale_{screen_scale}, state_{state},
-      screen_width_{chip8_.SCREEN_WIDTH * screen_scale},
-      screen_height_{chip8_.SCREEN_HEIGHT * screen_scale} {
-    u32 ec = init_SDL();
+      window_width_{chip8_.SCREEN_WIDTH * screen_scale},
+      window_height_{chip8_.SCREEN_HEIGHT * screen_scale} {
+    u32 ec = init_video();
     // terminate if SDL does not load correctly
     if (ec != 0) {
-        std::abort();
+        std::terminate();
     }
 }
 
 Emu::~Emu() {
-    SDL_DestroyRenderer(renderer_);
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
+
+    SDL_GL_DeleteContext(gl_context_);
     SDL_DestroyWindow(window_);
     SDL_Quit();
 }
 
 void Emu::render() {
-    SDL_RenderClear(renderer_);
     const auto &screen = chip8_.screen();
-    SDL_SetRenderDrawColor(renderer_, background_red, background_green,
-                           background_blue, 0);
-    SDL_RenderFillRect(renderer_, nullptr);
-
-    auto rows = std::views::iota(0u, chip8_.SCREEN_HEIGHT);
-    auto cols = std::views::iota(0u, chip8_.SCREEN_WIDTH);
-
-    SDL_SetRenderDrawColor(renderer_, pixel_red, pixel_green, pixel_blue, 0);
-    for (const auto row : rows) {
-        for (const auto col : cols) {
-            auto screen_ind = row_col_to_screen_index(row, col);
-            if (screen[screen_ind]) {
-                SDL_Rect rect = {.x = static_cast<int>(col * screen_scale_),
-                                 .y = static_cast<int>(row * screen_scale_),
-                                 .w = screen_scale_,
-                                 .h = screen_scale_};
-                SDL_RenderFillRect(renderer_, &rect);
-            }
-        }
-    }
-
-    SDL_RenderPresent(renderer_);
+    renderer_.render(screen);
+/*     SDL_RenderClear(renderer_); */
+/*     SDL_SetRenderDrawColor(renderer_, background_red, background_green, */
+/*                            background_blue, 0); */
+/*     SDL_RenderFillRect(renderer_, nullptr); */
+/*  */
+/*     auto rows = std::views::iota(0u, chip8_.SCREEN_HEIGHT); */
+/*     auto cols = std::views::iota(0u, chip8_.SCREEN_WIDTH); */
+/*  */
+/*     SDL_SetRenderDrawColor(renderer_, pixel_red, pixel_green, pixel_blue, 0); */
+/*     for (const auto row : rows) { */
+/*         for (const auto col : cols) { */
+/*             auto screen_ind = row_col_to_screen_index(row, col); */
+/*             if (screen[screen_ind]) { */
+/*                 SDL_Rect rect = {.x = static_cast<int>(col * screen_scale_), */
+/*                                  .y = static_cast<int>(row * screen_scale_), */
+/*                                  .w = screen_scale_, */
+/*                                  .h = screen_scale_}; */
+/*                 SDL_RenderFillRect(renderer_, &rect); */
+/*             } */
+/*         } */
+/*     } */
+/*  */
+/*     SDL_RenderPresent(renderer_); */
 }
 
 void Emu::step() {
@@ -87,6 +118,9 @@ void Emu::cycle_forward(u8 cycles_remaining) {
 /// return the number of chip8 instructions executed
 u8 Emu::handle_event(const SDL_Event &event) {
     u8 instructions_executed = 0;
+
+    // first pass event to ImGui
+    ImGui_ImplSDL2_ProcessEvent(&event);
 
     switch (event.type) {
     case SDL_QUIT:

@@ -1,9 +1,6 @@
 #include "SDL.h"
 #include "spdlog/spdlog.h"
 
-#include "chip8.h"
-#include "rom.h"
-#include "common.h"
 #include <SDL_pixels.h>
 #include <SDL_render.h>
 #include <cstdlib>
@@ -12,21 +9,29 @@
 #include <fstream>
 #include <string_view>
 
+#include "chip8.h"
+#include "rom.h"
+#include "common.h"
+#include "renderer.h"
+
 class Emu {
 
   public:
     enum class State { Debug, Pause, Run };
 
   private:
-    SDL_Window *window_ = nullptr;
-    SDL_Renderer *renderer_ = nullptr;
+    SDL_Window *window_;
+    SDL_GLContext gl_context_;
     SDL_Event event_;
+
+    Renderer renderer_;
 
     Chip8 chip8_;
     u8 screen_scale_;
     State state_;
-    u32 screen_width_;
-    u32 screen_height_;
+    u32 window_width_;
+    u32 window_height_;
+
     u32 frames_per_second_ = 60;
     u32 instructions_per_frame_ = 10;
     bool running_ = true;
@@ -43,10 +48,14 @@ class Emu {
     // constants
     const char *WINDOW_NAME = "Chip8-cpp";
 
-    u32 init_SDL();
+    u32 init_video();
 
   public:
     Emu(u8 screen_scale, State state);
+    Emu(const Emu&) = delete;
+    Emu(Emu&&) = delete;
+    Emu& operator=(const Emu&) = delete;
+    Emu& operator=(Emu&&) = delete;
     ~Emu();
 
     void load_rom(const Rom& rom);
