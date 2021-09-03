@@ -3,7 +3,7 @@
 #include <glbinding/gl/functions.h>
 #include <glbinding/glbinding.h>
 #include <glbinding/gl/gl.h>
-#define IMGUI_IMPL_OPENGL_LOADER_GLBINDING3
+#define IMGUI_IMPL_OPENGL_LOADER_GLBINDING3 1
 #include <SDL.h>
 #include <SDL2/SDL_video.h>
 

@@ -19,10 +19,10 @@ class Renderer {
         Renderer& operator=(const Renderer&) = delete;
         Renderer& operator=(Renderer&&) = delete;
 
-        void render(std::array<bool, Chip8::SCREEN_WIDTH * Chip8::SCREEN_HEIGHT>& screen);
+        void render(const std::array<bool, Chip8::SCREEN_WIDTH * Chip8::SCREEN_HEIGHT>& screen);
 
         bool show_debugger() { return show_debugger_;}
-        bool toggle_debugger() { show_debugger_ = !show_debugger_;}
+        void toggle_debugger() { show_debugger_ = !show_debugger_;}
 
     private:
 
