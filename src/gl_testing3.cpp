@@ -1,3 +1,4 @@
+
 #include <SDL_events.h>
 #include <glbinding/gl/enum.h>
 #include <glbinding/gl/functions.h>
@@ -6,25 +7,50 @@
 #define IMGUI_IMPL_OPENGL_LOADER_GLBINDING3 1
 #include <SDL.h>
 #include <SDL_video.h>
-
 #include "spdlog/spdlog.h"
+
+#include "common.h"
+
 // Vertex Shader source code
-const char* vertexShaderSource = "#version 330 core\n"
+const char* vertexShaderSource = "#version 440 core\n"
 "layout (location = 0) in vec3 aPos;\n"
+"layout (location = 1) in vec2 texcoord;\n"
+"out vec2 Texcoord;\n"
 "void main()\n"
 "{\n"
 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"   Texcoord = texcoord;\n"
 "}\0";
 //Fragment Shader source code
-const char* fragmentShaderSource = "#version 330 core\n"
+const char* fragmentShaderSource = "#version 440 core\n"
+"in vec2 Texcoord;\n"
 "out vec4 FragColor;\n"
+"uniform sampler2D tex;\n"
+/* "vec4 rgb_sample(usampler2D sampler, vec2 coordinate)\n" */
+/* "{\n" */
+/* "       uint texValue = texture(sampler, coordinate).r;\n" */
+/* "       return vec4(texValue & 4u, texValue & 2u, texValue & 1u, 1.0);\n" */
+/* "}\n" */
 "void main()\n"
 "{\n"
-"   FragColor = vec4(0.8f, 0.3f, 0.02f, 1.0f);\n"
+/* "   FragColor = rgb_sample(tex, Texcoord);\n" */
+"   FragColor = texture(tex, Texcoord);\n"
 "}\n\0";
 
 
 using namespace gl;
+
+void  dbg_callback(GLenum source,
+                 GLenum type,
+                 GLuint id,
+                 GLenum severity,
+                 GLsizei length,
+                 const GLchar* message,
+                 const void* userParam ) {
+    spdlog::debug("GL CALLBACK: {}, severity = {:x}, message = {}",
+            (type == GL_DEBUG_TYPE_ERROR ? "GL Error" : ""),
+            severity, message);
+}
 
 int main() {
     spdlog::set_level(spdlog::level::debug);
@@ -34,8 +60,8 @@ int main() {
         return 10;
     }
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
@@ -43,8 +69,8 @@ int main() {
                         SDL_GL_CONTEXT_PROFILE_CORE);
 
     SDL_Window *window = SDL_CreateWindow(
-        "OpenGL window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800,
-        800, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+        "OpenGL window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 600,
+        400, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
     SDL_GL_SetSwapInterval(1);
@@ -53,7 +79,10 @@ int main() {
         return (glbinding::ProcAddress)SDL_GL_GetProcAddress(name);
     });
 
-    glViewport(0, 0, 800, 800);
+    glEnable(GLenum::GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(dbg_callback, 0);
+
+    glViewport(0, 0, 600, 400);
 
     // create vertex shader object
     GLuint vertex_shader = glCreateShader(GLenum::GL_VERTEX_SHADER);
@@ -82,29 +111,58 @@ int main() {
     // attach shaders
     glAttachShader(shader_program, vertex_shader);
     glAttachShader(shader_program, fragment_shader);
+    glBindFragDataLocation(shader_program, 0, "outColor");
     // link program
     glLinkProgram(shader_program);
+    glDeleteShader(vertex_shader);
+    glDeleteShader(fragment_shader);
+    glUseProgram(shader_program);
 
     GLfloat vertices[] =
-	{
-		-0.5f, -0.5f, 0.0f, // Lower left corner
-		0.5f, -0.5f, 0.0f, // Lower right corner
-		0.5f, 0.5f, 0.0f, // Upper right
-		-0.5f, 0.5f, 0.0f // Upper left
+	{ 
+                // screen coordinates   // texture coordinates
+		-1.0f, -1.0f, 0.0f,     0.0f, 0.0f,           // Lower left corner
+		1.0f, -1.0f, 0.0f,      1.0f, 0.0f,           // Lower right corner
+		1.0f, 1.0f, 0.0f,       1.0f, 1.0f,           // Upper right
+		-1.0f, 1.0f, 0.0f,      0.0f, 1.0f            // Upper left
 	};
+
+    // make texture
+    GLuint texture;
+    glGenTextures(1, &texture);
+
+    std::array<GLubyte, 24> screen_data { 
+        10u, 255u, 90u, 255u,  200u, 20u, 20u, 255u,  20u, 20u, 0u, 255u,
+        20u, 20u, 20u, 255u,     20u, 200u, 20u, 255u,  200u, 200u, 200u, 255u
+    };
+
+    // configure texture
+    glBindTexture(GLenum::GL_TEXTURE_2D, texture);
+    glTexParameteri(GLenum::GL_TEXTURE_2D, GLenum::GL_TEXTURE_MIN_FILTER, GLenum::GL_NEAREST);
+    glTexParameteri(GLenum::GL_TEXTURE_2D, GLenum::GL_TEXTURE_MAG_FILTER, GLenum::GL_NEAREST);
+    glTexParameteri(GLenum::GL_TEXTURE_2D, GLenum::GL_TEXTURE_WRAP_S, GLenum::GL_CLAMP_TO_EDGE);
+    glTexParameteri(GLenum::GL_TEXTURE_2D, GLenum::GL_TEXTURE_WRAP_T, GLenum::GL_CLAMP_TO_EDGE);
+    // glGenerateMipmap(GLenum::GL_TEXTURE_2D);
+    glTexStorage2D(GLenum::GL_TEXTURE_2D, 1, GLenum::GL_RGBA8, 3, 2);
+    glTexSubImage2D(GLenum::GL_TEXTURE_2D, 0, 0, 0, 3, 2,
+            GLenum::GL_BGRA, GLenum::GL_UNSIGNED_BYTE, screen_data.data());
+    // uniform sampler for shader
+    glUniform1i(glGetUniformLocation(shader_program, "tex"), 0);
+    glBindTexture(GLenum::GL_TEXTURE_2D, 0);
+
 
 
     // create references for vertex array object and vertex buffer object
-    GLuint vertex_array_object, vertex_buffer_object;
+    GLuint vao, vbo;
     // generate them with 1 object each
-    glGenVertexArrays(1, &vertex_array_object);
-    glGenBuffers(1, &vertex_buffer_object);
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
 
     // bind vertex array object
-    glBindVertexArray(vertex_array_object);
+    glBindVertexArray(vao);
 
-    // bind vertex_buffer_object 
-    glBindBuffer(GLenum::GL_ARRAY_BUFFER, vertex_buffer_object);
+    // bind vbo 
+    glBindBuffer(GLenum::GL_ARRAY_BUFFER, vbo);
     // give vertices data to buffer
     glBufferData(GLenum::GL_ARRAY_BUFFER, sizeof(vertices), vertices, GLenum::GL_STATIC_DRAW);
 
@@ -112,17 +170,21 @@ int main() {
     GLuint elements[] = {
         0, 1, 2, 2, 3, 0
     };
-    GLuint elements_buffer_object;
-    glGenBuffers(1, &elements_buffer_object);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elements_buffer_object);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
+    GLuint ebo;
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GLenum::GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GLenum::GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GLenum::GL_STATIC_DRAW);
 
-    // configure vertex attribute so gl know how to read vertex_buffer_object
-    glVertexAttribPointer(0, 3, GLenum::GL_FLOAT, GL_FALSE, 3*sizeof(float), nullptr);
-    // enable vertex attribute
+    // configure vertex attribute so gl know how to read vbo
+    glVertexAttribPointer(0, 3, GLenum::GL_FLOAT, GL_FALSE, 5*sizeof(float), 0);
+    // texture attribute
+    glVertexAttribPointer(1, 2, GLenum::GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
+    // enable position attribute
     glEnableVertexAttribArray(0);
+    // enable texture attribute
+    glEnableVertexAttribArray(1);
 
-    // rebind vertex_array_object and vertex_buffer_object  so that we dont modify it incorrectly
+    // rebind vao and vbo  so that we dont modify it incorrectly
     glBindBuffer(GLenum::GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
@@ -151,10 +213,10 @@ int main() {
         glClearColor(color, 0.13f, 0.17f, 1.0f);
         // clean back buffer and assign color to it
         glClear(GL_COLOR_BUFFER_BIT);
-        // tell gl to use shader program
-        glUseProgram(shader_program);
+        // bind texture
+        glBindTexture(GLenum::GL_TEXTURE_2D, texture);
         // bind vertex_array
-        glBindVertexArray(vertex_array_object);
+        glBindVertexArray(vao);
         // draw trianges using GL_TRIANGLES primitive
         // use glDrawElements instead to make a rectangle
         // glDrawArrays(GLenum::GL_TRIANGLE_STRIP, 0, 4);
@@ -164,9 +226,10 @@ int main() {
     }
 
     // free objects
-    glDeleteVertexArrays(1, &vertex_array_object);
-    glDeleteBuffers(1, &vertex_buffer_object);
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
     glDeleteProgram(shader_program);
+    glDeleteTextures(1, &texture);
 
     SDL_GL_DeleteContext(gl_context);
     SDL_DestroyWindow(window);
