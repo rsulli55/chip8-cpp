@@ -122,7 +122,9 @@ int main() {
     glBindFragDataLocation(shader_program, 0, "outColor");
     // link program
     glLinkProgram(shader_program);
+    glDetachShader(shader_program, vertex_shader);
     glDeleteShader(vertex_shader);
+    glDetachShader(shader_program, fragment_shader);
     glDeleteShader(fragment_shader);
     glUseProgram(shader_program);
 
