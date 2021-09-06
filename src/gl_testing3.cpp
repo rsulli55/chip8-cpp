@@ -203,7 +203,6 @@ int main() {
 
     // rebind vao and vbo  so that we dont modify it incorrectly
     glBindBuffer(GLenum::GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
 
     bool running = true;
     auto steps = std::array<int, 5> {1, 2, 3, 4, 5};
@@ -233,11 +232,11 @@ int main() {
         // bind texture
         /* glBindTexture(GLenum::GL_TEXTURE_2D, texture); */
         // bind vertex_array
-        glBindVertexArray(vao);
-        // draw trianges using GL_TRIANGLES primitive
-        // use glDrawElements instead to make a rectangle
-        // glDrawArrays(GLenum::GL_TRIANGLE_STRIP, 0, 4);
-        glDrawElements(GLenum::GL_TRIANGLES, 6, GLenum::GL_UNSIGNED_INT, nullptr);
+        /* glBindVertexArray(vao); */
+        /* // draw trianges using GL_TRIANGLES primitive */
+        /* // use glDrawElements instead to make a rectangle */
+        /* // glDrawArrays(GLenum::GL_TRIANGLE_STRIP, 0, 4); */
+        /* glDrawElements(GLenum::GL_TRIANGLES, 6, GLenum::GL_UNSIGNED_INT, nullptr); */
         // swap buffers
         SDL_GL_SwapWindow(window);
     }
