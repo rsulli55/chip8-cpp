@@ -66,4 +66,4 @@ class Emu {
     u8 handle_event(const SDL_Event &event);
 };
 
-Rom read_rom_file(const std::string_view &path);
+Rom read_rom_file(std::string_view path);

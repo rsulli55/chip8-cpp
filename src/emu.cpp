@@ -184,13 +184,13 @@ void Emu::load_rom(const Rom &rom) {
 }
 
 
-Rom read_rom_file(const std::string_view &path) {
+Rom read_rom_file(std::string_view path) {
     namespace fs = std::filesystem;
     fs::path file_path{path};
 
     if (!fs::is_regular_file(file_path)) {
         spdlog::error("Rom File: {} is not a regular file", file_path.string());
-        return std::vector<u8>{};
+        return Rom{};
     }
 
     // stackoverflow post:
