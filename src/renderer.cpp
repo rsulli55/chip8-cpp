@@ -1,4 +1,5 @@
 #include "renderer.h"
+#include "imgui.h"
 
 Renderer::Renderer(Shader& shader) : shader_{shader} {
     init_texture();
@@ -23,6 +24,8 @@ void Renderer::render(const std::array<bool, Chip8::SCREEN_WIDTH * Chip8::SCREEN
 
     // bind vao, set box color uniform, and draw
     glBindVertexArray(vao_);
+    glBindBuffer(GLenum::GL_ARRAY_BUFFER, vbo_);
+    glBindBuffer(GLenum::GL_ELEMENT_ARRAY_BUFFER, ebo_);
     shader_.set_float3("box_color", box_color_.r, box_color_.g, box_color_.b);
     glDrawElements(GLenum::GL_TRIANGLES, NUM_ELEMENTS, GLenum::GL_UNSIGNED_INT, nullptr);
 }
@@ -94,7 +97,6 @@ void Renderer::init_vao() {
     // unbind everything
     glBindBuffer(GLenum::GL_ARRAY_BUFFER, 0);
     glBindBuffer(GLenum::GL_ELEMENT_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
 }
 
 

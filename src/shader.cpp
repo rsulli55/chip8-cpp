@@ -6,7 +6,10 @@
 
 #include "shader.h"
 
-Shader::Shader(std::string_view vertex_src, std::string_view fragment_src) {
+Shader::Shader(std::string_view vertex_src_path, std::string_view fragment_src_path) {
+    // read shader source
+    auto vertex_src = load_glsl_src(vertex_src_path);
+    auto fragment_src = load_glsl_src(fragment_src_path);
     // build shaders 
     auto [v_status, vertex] = build_shader(GLenum::GL_VERTEX_SHADER, vertex_src);
     auto [f_status, fragment] = build_shader(GLenum::GL_FRAGMENT_SHADER, fragment_src);
@@ -16,6 +19,7 @@ Shader::Shader(std::string_view vertex_src, std::string_view fragment_src) {
     glDeleteShader(fragment);
     // store program id
     id_ = program;
+    glUseProgram(id_);
 }
 
 Shader::~Shader() {
@@ -48,8 +52,11 @@ bool check_shader_compilation(GLuint shader) {
     int status = 0;
     glGetShaderiv(shader, GLenum::GL_COMPILE_STATUS, &status);
     if (status != GL_TRUE) {
-        char buffer[1024];
-        glGetShaderInfoLog(shader, 1024, nullptr, buffer);
+        GLint max_length = 0;
+	glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &max_length);
+        auto buffer = std::string(max_length, '\0');
+        glGetShaderInfoLog(shader, 1024, nullptr, buffer.data());
+        spdlog::error("Program linking failed: {}", buffer);
         spdlog::error("Shader compilation failed: {}", buffer);
         return false;
     }
@@ -59,10 +66,12 @@ bool check_shader_compilation(GLuint shader) {
 
 bool check_program_linking(GLuint program) {
     int status = 0;
-    glGetShaderiv(program, GLenum::GL_LINK_STATUS, &status);
+    glGetProgramiv(program, GLenum::GL_LINK_STATUS, &status);
     if (status != GL_TRUE) {
-        char buffer[1024];
-        glGetProgramInfoLog(program, 1024, nullptr, buffer);
+        GLint max_length = 0;
+	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &max_length);
+        auto buffer = std::string(max_length, '\0');
+        glGetProgramInfoLog(program, 1024, nullptr, buffer.data());
         spdlog::error("Program linking failed: {}", buffer);
         return false;
     }
@@ -75,13 +84,13 @@ std::string load_glsl_src(std::string_view path) {
     fs::path file_path{path};
 
     if (!fs::is_regular_file(file_path)) {
-        spdlog::error("Shader file: {} is not a regular file", file_path);
+        spdlog::error("Shader file: {} is not a regular file", file_path.string());
         return "";
     }
 
-    std::ifstream file{path, std::ios::in};
+    std::ifstream file{file_path, std::ios::in};
     if (!file.is_open()) { 
-        spdlog::error("Shader file: could not open {}", file_path);
+        spdlog::error("Shader file: could not open {}", file_path.string());
         return "";
     }
 
@@ -89,6 +98,8 @@ std::string load_glsl_src(std::string_view path) {
     auto to_return = std::string(file_size, '\0');
 
     file.read(to_return.data(), file_size);
+
+    spdlog::debug("Loaded the following shader:\n{}\n", to_return);
 
     return to_return;
 }

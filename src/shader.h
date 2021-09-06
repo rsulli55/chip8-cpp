@@ -9,7 +9,7 @@ class Shader {
     GLuint id_;
 
     public: 
-    Shader(std::string_view vertex_src, std::string_view fragment_src);
+    Shader(std::string_view vertex_src_path, std::string_view fragment_src_path);
     ~Shader();
     
     Shader(const Shader&) = delete;

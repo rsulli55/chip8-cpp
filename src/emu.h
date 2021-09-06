@@ -10,9 +10,11 @@
 #include <string_view>
 
 #include "chip8.h"
+#include "window.h"
 #include "rom.h"
 #include "common.h"
 #include "renderer.h"
+#include "shader.h"
 
 class Emu {
 
@@ -20,33 +22,38 @@ class Emu {
     enum class State { Debug, Pause, Run };
 
   private:
-    SDL_Window *window_;
-    SDL_GLContext gl_context_;
+    /* SDL_Window *window_; */
+    /* SDL_GLContext gl_context_; */
     SDL_Event event_;
 
-    Renderer renderer_;
 
     Chip8 chip8_;
-    u8 screen_scale_;
-    State state_;
-    u32 window_width_;
-    u32 window_height_;
 
+    // TODO: move some of these to a Settings struct
+    /* u8 screen_scale_; */
+    /* u32 window_width_; */
+    /* u32 window_height_; */
     u32 frames_per_second_ = 60;
     u32 instructions_per_frame_ = 10;
+    const std::string vert_shader_path = "shaders/vertex.vert";
+    const std::string frag_shader_path = "shaders/fragment.frag";
+
+    State state_;
     bool running_ = true;
     bool chip8_paused_ = true;
+
+    Window window_;
+    Shader shader_;
+    Renderer renderer_;
     // colors
-    const u8 background_red = 0x0F;
-    const u8 background_green = 0x0F;
-    const u8 background_blue = 0xFF;
+/*     const u8 background_red = 0x0F; */
+/*     const u8 background_green = 0x0F; */
+/*     const u8 background_blue = 0xFF; */
+/*  */
+/*     const u8 pixel_red = 0xFF; */
+/*     const u8 pixel_green = 0x00; */
+/*     const u8 pixel_blue = 0x0F; */
 
-    const u8 pixel_red = 0xFF;
-    const u8 pixel_green = 0x00;
-    const u8 pixel_blue = 0x0F;
-
-    // constants
-    const char *WINDOW_NAME = "Chip8-cpp";
 
     u32 init_video();
 
