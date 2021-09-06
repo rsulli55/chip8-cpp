@@ -126,6 +126,14 @@ u8 Emu::handle_event(const SDL_Event &event) {
         running_ = false;
         break;
 
+    case SDL_WINDOWEVENT:
+        if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+            spdlog::debug("SDL_WINDOWEVENT: SIZE_CHANGED to ({}, {})", 
+                    event.window.data1, event.window.data2);
+            window_.resize();
+        }
+        break;
+
     case SDL_KEYDOWN:
         Uint8 const *keys = SDL_GetKeyboardState(nullptr);
 

@@ -15,7 +15,9 @@ Shader::Shader(std::string_view vertex_src_path, std::string_view fragment_src_p
     auto [f_status, fragment] = build_shader(GLenum::GL_FRAGMENT_SHADER, fragment_src);
     // build program and delete shaders
     auto [p_status, program] = build_program(vertex, fragment);
+    glDetachShader(program, vertex);
     glDeleteShader(vertex);
+    glDetachShader(program, fragment);
     glDeleteShader(fragment);
     // store program id
     id_ = program;
@@ -23,6 +25,7 @@ Shader::Shader(std::string_view vertex_src_path, std::string_view fragment_src_p
 }
 
 Shader::~Shader() {
+    spdlog::debug("Deleting Shader");
     glDeleteProgram(id_);
 }
 

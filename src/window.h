@@ -15,6 +15,7 @@ class Window {
         Window& operator=(Window&&) = delete;
 
         void swap_window() { SDL_GL_SwapWindow(window_); }
+        void resize();
 
 
     private: 

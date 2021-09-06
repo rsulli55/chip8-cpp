@@ -9,10 +9,14 @@ Renderer::Renderer(Shader& shader) : shader_{shader} {
 }
 
 Renderer::~Renderer() {
-    glDeleteTextures(1, &texture_);
-    glDeleteBuffers(1, &vbo_);
-    glDeleteBuffers(1, &ebo_);
+    spdlog::debug("Deleting vao");
     glDeleteVertexArrays(1, &vao_);
+    spdlog::debug("Deleting texture");
+    glDeleteTextures(1, &texture_);
+    spdlog::debug("Deleting vbo");
+    glDeleteBuffers(1, &vbo_);
+    spdlog::debug("Deleting ebo");
+    glDeleteBuffers(1, &ebo_);
 }
 
 void Renderer::render(const std::array<bool, Chip8::SCREEN_WIDTH * Chip8::SCREEN_HEIGHT>& screen) {

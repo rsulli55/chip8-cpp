@@ -23,9 +23,19 @@ Window::~Window() {
     /* ImGui_ImplSDL2_Shutdown(); */
     /* ImGui::DestroyContext(); */
 
+    spdlog::debug("Deleting GL Context");
     SDL_GL_DeleteContext(gl_context_);
+    spdlog::debug("Deleting SDL Window");
     SDL_DestroyWindow(window_);
+    spdlog::debug("Calling SDL Quit");
     SDL_Quit();
+}
+
+void Window::resize() {
+    int width = 0;
+    int height = 0;
+    SDL_GL_GetDrawableSize(window_, &width, &height);
+    glViewport(0, 0, width, height);
 }
 
 
