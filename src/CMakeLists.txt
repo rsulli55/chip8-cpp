@@ -22,4 +22,6 @@ add_executable(chip8_cpp main.cpp chip8.cpp emu.cpp window.cpp shader.cpp render
 set_property(TARGET chip8_cpp
     PROPERTY CXX_STANDARD 20)
 conan_target_link_libraries(chip8_cpp CONAN_PKG::spdlog CONAN_PKG::sdl2 CONAN_PKG::pulseaudio CONAN_PKG:glbinding CONAN_PKG::imgui)
-target_link_libraries(chip8_cpp -fsanitize=address)
+# target_link_libraries(chip8_cpp -fsanitize=address)
+# Don't link with sanitizer to get valgrind to work
+target_link_libraries(chip8_cpp)
