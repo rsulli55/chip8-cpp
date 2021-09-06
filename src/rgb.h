@@ -3,7 +3,7 @@
 #include "common.h"
 
 struct RGB {
-    u8 r;
-    u8 g;
-    u8 b;
+    float r;
+    float g;
+    float b;
 };

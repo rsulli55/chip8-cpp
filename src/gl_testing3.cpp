@@ -34,7 +34,11 @@ const char* fragmentShaderSource = "#version 440 core\n"
 "void main()\n"
 "{\n"
 /* "   FragColor = rgb_sample(tex, Texcoord);\n" */
-"   FragColor = texture(tex, Texcoord);\n"
+/* "   FragColor = vec4(texture(tex, Texcoord).rrr, 1.0) * vec4(0.8, 0.2, 0.7, 1.0);\n" */
+"   float alpha = texture(tex, Texcoord).r;\n"
+/* "   if (alpha < 0.01);\n" */
+/* "       discard;\n" */
+"   FragColor = vec4(1.0, 0.0, 0.0, alpha);\n"
 "}\n\0";
 
 
@@ -81,6 +85,10 @@ int main() {
 
     glEnable(GLenum::GL_DEBUG_OUTPUT);
     glDebugMessageCallback(dbg_callback, 0);
+
+    // set up transparency
+    glEnable(GLenum::GL_BLEND);
+    glBlendFunc(GLenum::GL_SRC_ALPHA, GLenum::GL_ONE_MINUS_SRC_ALPHA);
 
     glViewport(0, 0, 600, 400);
 
@@ -131,9 +139,19 @@ int main() {
     GLuint texture;
     glGenTextures(1, &texture);
 
-    std::array<GLubyte, 24> screen_data { 
-        10u, 255u, 90u, 255u,  200u, 20u, 20u, 255u,  20u, 20u, 0u, 255u,
-        20u, 20u, 20u, 255u,     20u, 200u, 20u, 255u,  200u, 200u, 200u, 255u
+    /* std::array<GLubyte, 24> screen_data {  */
+    /*     10u, 255u, 90u, 255u,  200u, 20u, 20u, 255u,  20u, 20u, 0u, 255u, */
+    /*     20u, 20u, 20u, 255u,     20u, 200u, 20u, 255u,  200u, 200u, 200u, 255u */
+    /* }; */
+
+    /* std::array<GLubyte, 18> screen_data {  */
+    /*     10u, 255u, 90u,     200u, 20u, 20u,     20u, 20u, 0u, */
+    /*     20u, 20u, 20u,      20u, 200u, 20u,     200u, 200u, 200u */
+    /* }; */
+
+    std::array<GLubyte, 6> screen_data { 
+        10u,    200u,   20u, 
+        20u,    20u,    200u
     };
 
     // configure texture
@@ -143,12 +161,11 @@ int main() {
     glTexParameteri(GLenum::GL_TEXTURE_2D, GLenum::GL_TEXTURE_WRAP_S, GLenum::GL_CLAMP_TO_EDGE);
     glTexParameteri(GLenum::GL_TEXTURE_2D, GLenum::GL_TEXTURE_WRAP_T, GLenum::GL_CLAMP_TO_EDGE);
     // glGenerateMipmap(GLenum::GL_TEXTURE_2D);
-    glTexStorage2D(GLenum::GL_TEXTURE_2D, 1, GLenum::GL_RGBA8, 3, 2);
+    glTexStorage2D(GLenum::GL_TEXTURE_2D, 1, GLenum::GL_R8, 3, 2);
     glTexSubImage2D(GLenum::GL_TEXTURE_2D, 0, 0, 0, 3, 2,
-            GLenum::GL_BGRA, GLenum::GL_UNSIGNED_BYTE, screen_data.data());
+            GLenum::GL_RED, GLenum::GL_UNSIGNED_BYTE, screen_data.data());
     // uniform sampler for shader
     glUniform1i(glGetUniformLocation(shader_program, "tex"), 0);
-    glBindTexture(GLenum::GL_TEXTURE_2D, 0);
 
 
 
@@ -214,7 +231,7 @@ int main() {
         // clean back buffer and assign color to it
         glClear(GL_COLOR_BUFFER_BIT);
         // bind texture
-        glBindTexture(GLenum::GL_TEXTURE_2D, texture);
+        /* glBindTexture(GLenum::GL_TEXTURE_2D, texture); */
         // bind vertex_array
         glBindVertexArray(vao);
         // draw trianges using GL_TRIANGLES primitive
@@ -228,6 +245,7 @@ int main() {
     // free objects
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
     glDeleteProgram(shader_program);
     glDeleteTextures(1, &texture);
 
