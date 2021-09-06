@@ -57,12 +57,34 @@ class Renderer {
         const u8 TEX_OFFSET = 2 * sizeof(GLfloat);
         const u32 VERTEX_SIZE = 4 * sizeof(GLfloat);
         const u8 NUM_VERTICES = 16;
+        // screen coordinates: 
+        // (-1, 1)  +------+   (1,1)
+        //          |      |
+        //          |      |
+        //(-1, -1)  +------+   (1,-1)
+        //
+        // texture coordinates:
+        //  (0, 1)  +------+   (1,1)
+        //          |      |
+        //          |      |
+        //  (0, 0)  +------+   (1,0)
+        //
+        // the texture data is fed in from the bottom row to the top row i.e.
+        // texture looks like: 
+        //  (0, 1)  +------+   (1,1)
+        //          |  r3  |
+        //          |  r2  |
+        //          |  r1  |
+        //  (0, 0)  +------+   (1,0)
+        //
+        // so we have to match top of screen to bottom of texture and vice versa
+        //
         const GLfloat vertices_[16] = {
             // screen coordinates   // texture coordinates
-            -1.0f,  -1.0f,          0.0f, 0.0f,      // Lower left corner
-             1.0f,  -1.0f,          1.0f, 0.0f,      // Lower right corner
-             1.0f,   1.0f,          1.0f, 1.0f,      // Upper right
-            -1.0f,   1.0f,          0.0f, 1.0f       // Upper left
+            -1.0f,  -1.0f,          0.0f, 1.0f,      // Lower left corner
+             1.0f,  -1.0f,          1.0f, 1.0f,      // Lower right corner
+             1.0f,   1.0f,          1.0f, 0.0f,      // Upper right
+            -1.0f,   1.0f,          0.0f, 0.0f       // Upper left
         };
         const u8 NUM_ELEMENTS = 6;
         const GLuint elements_[6] = {
