@@ -22,8 +22,6 @@ class Emu {
     enum class State { Debug, Pause, Run };
 
   private:
-    /* SDL_Window *window_; */
-    /* SDL_GLContext gl_context_; */
     SDL_Event event_;
 
 
@@ -45,25 +43,9 @@ class Emu {
     Window window_;
     Shader shader_;
     Renderer renderer_;
-    // colors
-/*     const u8 background_red = 0x0F; */
-/*     const u8 background_green = 0x0F; */
-/*     const u8 background_blue = 0xFF; */
-/*  */
-/*     const u8 pixel_red = 0xFF; */
-/*     const u8 pixel_green = 0x00; */
-/*     const u8 pixel_blue = 0x0F; */
-
-
-    u32 init_video();
 
   public:
     Emu(u8 screen_scale, State state);
-    Emu(const Emu&) = delete;
-    Emu(Emu&&) = delete;
-    Emu& operator=(const Emu&) = delete;
-    Emu& operator=(Emu&&) = delete;
-    ~Emu();
 
     void load_rom(const Rom& rom);
     void run();
