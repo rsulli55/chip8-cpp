@@ -17,6 +17,9 @@ class Window {
         void swap_window() { SDL_GL_SwapWindow(window_); }
         void resize();
 
+    void start_ImGui_frame();
+    void render_ImGui_frame();
+
 
     private: 
     SDL_Window *window_;
@@ -27,10 +30,10 @@ class Window {
     u32 window_height_;
 
     u32 init_video();
+    void debug_window_widget();
 
     // constants
     const char *WINDOW_NAME = "Chip8-cpp";
-
 };
 
 static void gl_dbg_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
@@ -39,3 +42,4 @@ static void gl_dbg_callback(GLenum source, GLenum type, GLuint id, GLenum severi
             (type == GL_DEBUG_TYPE_ERROR ? "GL Error" : ""),
             severity, message);
 }
+

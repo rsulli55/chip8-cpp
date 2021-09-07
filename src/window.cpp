@@ -97,6 +97,22 @@ u32 Window::init_video() {
     return 0;
 }
 
+void Window::start_ImGui_frame() {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplSDL2_NewFrame(window_);
+    ImGui::NewFrame();
+}
 
+void Window::debug_window_widget() {
+    ImGui::Begin("Debugger");
+    ImGui::Text("Hello!");
+    ImGui::End();
+}
+
+void Window::render_ImGui_frame() {
+    debug_window_widget();
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
 
 

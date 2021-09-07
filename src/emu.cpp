@@ -15,7 +15,10 @@ Emu::Emu(u8 screen_scale, State state)
 
 void Emu::render() {
     const auto &screen = chip8_.screen();
+    // start ImGui frame, then draw using OpenGL, then render ImGui frame
+    window_.start_ImGui_frame();
     renderer_.render(screen);
+    window_.render_ImGui_frame();
     window_.swap_window();
 }
 

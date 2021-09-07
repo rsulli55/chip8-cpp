@@ -28,10 +28,12 @@ void Renderer::render(const std::array<bool, Chip8::SCREEN_WIDTH * Chip8::SCREEN
 
     // bind vao, set box color uniform, and draw
     glBindVertexArray(vao_);
-    glBindBuffer(GLenum::GL_ARRAY_BUFFER, vbo_);
-    glBindBuffer(GLenum::GL_ELEMENT_ARRAY_BUFFER, ebo_);
+    glUseProgram(shader_.id());
     shader_.set_float3("box_color", box_color_.r, box_color_.g, box_color_.b);
     glDrawElements(GLenum::GL_TRIANGLES, NUM_ELEMENTS, GLenum::GL_UNSIGNED_INT, nullptr);
+    // unbind
+    glUseProgram(0);
+    glBindVertexArray(0);
 }
 
 void Renderer::update_texture(const std::array<bool, Chip8::SCREEN_WIDTH * Chip8::SCREEN_HEIGHT>& screen) {
@@ -99,9 +101,8 @@ void Renderer::init_vao() {
     glEnableVertexAttribArray(POS_ATTR);
     glEnableVertexAttribArray(TEX_ATTR);
     // unbind everything
+    glBindVertexArray(0);
     glBindBuffer(GLenum::GL_ARRAY_BUFFER, 0);
     glBindBuffer(GLenum::GL_ELEMENT_ARRAY_BUFFER, 0);
 }
-
-
 
