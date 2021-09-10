@@ -1,7 +1,7 @@
 #include "renderer.h"
 #include "imgui.h"
 
-Renderer::Renderer(Shader& shader) : shader_{shader} {
+Renderer::Renderer() : shader_{vert_shader_path, frag_shader_path} {
     init_texture();
     init_vbo();
     init_ebo();

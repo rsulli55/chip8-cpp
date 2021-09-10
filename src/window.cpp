@@ -7,10 +7,11 @@
 
 #define IMGUI_IMPL_OPENGL_LOADER_GLBINDING3 1
 
-Window::Window(u8 screen_scale) :
+Window::Window(u8 screen_scale, Renderer& renderer) :
     screen_scale_{screen_scale},
     window_width_{Chip8::SCREEN_WIDTH * screen_scale},
-    window_height_{Chip8::SCREEN_HEIGHT * screen_scale} {
+    window_height_{Chip8::SCREEN_HEIGHT * screen_scale},
+    renderer_{renderer} {
         u32 ec = init_video();
         if (ec!= 0) {
             spdlog::error("initializing video failed, exiting.");
@@ -32,6 +33,14 @@ Window::~Window() {
     SDL_DestroyWindow(window_);
     spdlog::debug("Calling SDL Quit");
     SDL_Quit();
+}
+
+void Window::render(const std::array<bool, Chip8::SCREEN_WIDTH * Chip8::SCREEN_HEIGHT>& screen) {
+    // start ImGui frame, then draw using OpenGL, then render ImGui frame
+    start_ImGui_frame();
+    renderer_.render(screen);
+    render_ImGui_frame();
+    SDL_GL_SwapWindow(window_);
 }
 
 void Window::resize() {

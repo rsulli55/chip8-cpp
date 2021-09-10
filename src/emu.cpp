@@ -6,20 +6,12 @@
 #include "imgui_impl_sdl.h"
 
 Emu::Emu(u8 screen_scale, State state)
-    : window_{screen_scale},
-      shader_{vert_shader_path, frag_shader_path},
-      renderer_{shader_} {
-    // use shader program
-    glUseProgram(shader_.id());
-}
+    : window_{screen_scale, renderer_},
+    renderer_{} {}
 
 void Emu::render() {
     const auto &screen = chip8_.screen();
-    // start ImGui frame, then draw using OpenGL, then render ImGui frame
-    window_.start_ImGui_frame();
-    renderer_.render(screen);
-    window_.render_ImGui_frame();
-    window_.swap_window();
+    window_.render(screen);
 }
 
 void Emu::step() {
@@ -88,19 +80,28 @@ void Emu::run() {
             instructions_executed += handle_event(event_);
         }
 
+        // if not paused we would like to make sure we execute `instructions_per_frame_` 
+        // instructions before updating display
         if (!chip8_paused_) {
             cycle_forward(instructions_per_frame_ - instructions_executed);
-            instructions_executed = instructions_per_frame_;
-        }
-
-        if (instructions_executed >= 10) {
             instructions_executed = 0;
         }
-
-        if (instructions_executed == 0) {
-            render();
-            frames_rendered++;
+        // if we are paused then after we need to reset instructions_executed once enough
+        // instructions have been stepped through
+        else if (instructions_executed >= instructions_per_frame_) {
+            instructions_executed = 0;
         }
+        spdlog::debug("Instructions exectuted: {}", instructions_executed);
+
+        /* if (instructions_executed >= instructions_per_frame_) { */
+        /*     // we have completed enough instructions to update the display */
+        /*     instructions_executed = 0; */
+        /*     renderer_.render(chip8_.screen()); */
+        /* } */
+
+        render();
+        frames_rendered++;
+
         current_time = SDL_GetTicks();
         if (current_time > last_time + 1000) {
             spdlog::debug("Frames over last second = {}", frames_rendered);

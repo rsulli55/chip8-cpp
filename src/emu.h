@@ -14,7 +14,6 @@
 #include "rom.h"
 #include "common.h"
 #include "renderer.h"
-#include "shader.h"
 
 class Emu {
 
@@ -33,15 +32,12 @@ class Emu {
     /* u32 window_height_; */
     u32 frames_per_second_ = 60;
     u32 instructions_per_frame_ = 10;
-    const std::string vert_shader_path = "shaders/vertex.vert";
-    const std::string frag_shader_path = "shaders/fragment.frag";
 
     State state_;
     bool running_ = true;
     bool chip8_paused_ = true;
 
     Window window_;
-    Shader shader_;
     Renderer renderer_;
 
   public:

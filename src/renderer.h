@@ -12,7 +12,7 @@ using namespace gl;
 class Renderer {
 
     public:
-        Renderer(Shader& shader);
+        Renderer();
         ~Renderer();
         Renderer(const Renderer&) = delete;
         Renderer(Renderer&&) = delete;
@@ -31,9 +31,10 @@ class Renderer {
         GLuint vao_;
         GLuint vbo_;
         GLuint ebo_;
-        // TODO: maybe move shader to an argument of render, it is only used to set the sampler
-        // for texture
-        Shader& shader_;
+
+        const std::string vert_shader_path = "shaders/vertex.vert";
+        const std::string frag_shader_path = "shaders/fragment.frag";
+        Shader shader_;
 
         bool show_debugger_ = true;
 
