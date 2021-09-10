@@ -2,6 +2,42 @@
 #include "common.h"
 #include <algorithm>
 
+Chip8::Chip8() {
+    initialize_font();
+}
+
+u16 Chip8::fetch_with_pc(u16 pc) const noexcept {
+    // opcodes stored in big endian
+    u8 upper_byte = memory_[pc++];
+    u8 lower_byte = memory_[pc++];
+    u16 opcode = (upper_byte << 8) + lower_byte;
+
+    return opcode;
+}
+
+
+u16 Chip8::fetch() noexcept {
+    // opcodes stored in big endian
+    u8 upper_byte = memory_[pc_++];
+    u8 lower_byte = memory_[pc_++];
+    u16 opcode = (upper_byte << 8) + lower_byte;
+
+    return opcode;
+}
+
+void Chip8::cycle() noexcept {
+    auto opcode = fetch();
+    spdlog::debug("opcode = {:x}", opcode);
+    execute(opcode);
+}
+
+void Chip8::load_rom(const Rom& rom) {
+    const auto& data = rom.data_;
+    const auto end = std::min(std::cend(data),
+                              std::cbegin(data) + MEMORY_SIZE - ROM_START);
+    std::copy(std::cbegin(data), end, std::begin(memory_) + ROM_START);
+}
+
 void Chip8::execute(u16 opcode) noexcept {
     // clear bad_opcode if it was previously set
     clear_bad_opcode();
@@ -89,6 +125,32 @@ void Chip8::execute(u16 opcode) noexcept {
     }
 
     // TODO: increment pc
+}
+
+bool Chip8::screen_equal(const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other) const noexcept {
+    return std::ranges::equal(screen_, other);
+}
+
+auto Chip8::screen_difference(
+    const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other)
+    const noexcept {
+    auto differences = std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> {false};
+    auto compute_xor = [](const bool b1, const bool b2) {
+        return b1 != b2;
+    };
+    std::ranges::transform(screen_, other, std::begin(differences), compute_xor);
+
+    return differences;
+}
+
+// internal operations
+void Chip8::clear_screen() noexcept {
+    std::ranges::fill(screen_, false);
+}
+void Chip8::clear_bad_opcode() noexcept { bad_opcode_ = false; }
+void Chip8::initialize_font() {
+    std::copy(std::cbegin(FONT), std::cend(FONT),
+              std::begin(memory_) + FONT_START);
 }
 
 // instructions

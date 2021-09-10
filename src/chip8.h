@@ -15,13 +15,8 @@
 
 class Chip8 {
   public:
-    // constants
-    static constexpr u32 SCREEN_WIDTH = 64u;
-    static constexpr u32 SCREEN_HEIGHT = 32u;
-    static constexpr u16 ROM_START = 0x200u;
-    static constexpr u16 MEMORY_SIZE = 4096u;
 
-    Chip8() { initialize_font(); }
+    Chip8();
 
     u8 V(u8 reg) const noexcept { return V_[reg]; }
     u16 pc() const noexcept { return pc_; }
@@ -33,46 +28,26 @@ class Chip8 {
     u8 delay() const noexcept { return delay_; }
     bool bad_opcode() const noexcept { return bad_opcode_; }
 
-    void load_rom(const Rom& rom) noexcept {
-        const auto& data = rom.data_;
-        const auto end = std::min(std::cend(data),
-                                  std::cbegin(data) + MEMORY_SIZE - ROM_START);
-        std::copy(std::cbegin(data), end, std::begin(memory_) + ROM_START);
-    }
+    void load_rom(const Rom& rom);
 
-    u16 fetch() noexcept {
-        // opcodes stored in big endian
-        u8 upper_byte = memory_[pc_++];
-        u8 lower_byte = memory_[pc_++];
-        u16 opcode = (upper_byte << 8) + lower_byte;
+    u16 fetch_with_pc(u16 pc) const noexcept;
 
-        return opcode;
-    }
 
+    u16 fetch() noexcept;     
     void execute(u16 opcode) noexcept;
+    void cycle() noexcept; 
 
-    void cycle() noexcept {
-        auto opcode = fetch();
-        spdlog::debug("opcode = {:x}", opcode);
-        execute(opcode);
-    }
+    // constants
+    static constexpr u32 SCREEN_WIDTH = 64u;
+    static constexpr u32 SCREEN_HEIGHT = 32u;
+    static constexpr u16 ROM_START = 0x200u;
+    static constexpr u16 MEMORY_SIZE = 4096u;
 
-    bool screen_equal(const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other) const noexcept {
-        return std::ranges::equal(screen_, other);
-    }
-
-
+    // screen helpers
+    bool screen_equal(const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other) const noexcept; 
     auto screen_difference(
         const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other)
-        const noexcept {
-        auto differences = std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> {false};
-        auto compute_xor = [](const bool b1, const bool b2) {
-            return b1 != b2;
-        };
-        std::ranges::transform(screen_, other, std::begin(differences), compute_xor);
-
-        return differences;
-    }
+        const noexcept; 
 
   private:
     /// special registers
@@ -116,15 +91,11 @@ class Chip8 {
     // timers
     u8 sound_ = 0x0;
     u8 delay_ = 0x0;
+
     // internal operations
-    void clear_screen() noexcept {
-        std::ranges::fill(screen_, false);
-    }
-    void clear_bad_opcode() noexcept { bad_opcode_ = false; }
-    void initialize_font() noexcept {
-        std::copy(std::cbegin(FONT), std::cend(FONT),
-                  std::begin(memory_) + FONT_START);
-    }
+    void clear_screen() noexcept;     
+    void clear_bad_opcode() noexcept;
+    void initialize_font(); 
 
     /// instructions
     void inline _0NNN([[maybe_unused]] u16 opcode) noexcept;
