@@ -8,12 +8,15 @@
 #include <filesystem>
 #include <fstream>
 #include <string_view>
+#include <map>
 
 #include "chip8.h"
 #include "window.h"
 #include "rom.h"
 #include "common.h"
 #include "renderer.h"
+#include "instruction.h"
+
 
 class Emu {
 
@@ -49,6 +52,10 @@ class Emu {
     void render();
     void step();
     u8 handle_event(const SDL_Event &event);
+
+    static constexpr std::string_view instruction_table_path = "instruction_table.csv";
+    const std::map<u16, Instruction> instruction_table_;
 };
 
+std::map<u16, Instruction> load_instruction_file(std::string_view path);
 Rom read_rom_file(std::string_view path);

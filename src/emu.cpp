@@ -1,13 +1,19 @@
-#include "emu.h"
+#include <ranges>
+
 #include "SDL.h"
 #include "glbinding/glbinding.h"
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_sdl.h"
 
+#include "emu.h"
+#include "instruction.h"
+
 Emu::Emu(u8 screen_scale, State state)
     : window_{screen_scale, renderer_},
-    renderer_{} {}
+    renderer_{},
+    instruction_table_{load_instruction_file(instruction_table_path)}
+{}
 
 void Emu::render() {
     const auto &screen = chip8_.screen();
@@ -93,12 +99,6 @@ void Emu::run() {
         }
         spdlog::debug("Instructions exectuted: {}", instructions_executed);
 
-        /* if (instructions_executed >= instructions_per_frame_) { */
-        /*     // we have completed enough instructions to update the display */
-        /*     instructions_executed = 0; */
-        /*     renderer_.render(chip8_.screen()); */
-        /* } */
-
         render();
         frames_rendered++;
 
@@ -113,6 +113,47 @@ void Emu::run() {
 
 void Emu::load_rom(const Rom &rom) {
     chip8_.load_rom(rom);
+}
+
+std::map<u16, Instruction> load_instruction_file(std::string_view path) {
+    namespace fs = std::filesystem;
+    fs::path file_path{path};
+
+    if (!fs::is_regular_file(file_path)) {
+        spdlog::error("Instruction Table: {} is not a regular file", file_path.string());
+        std::terminate();
+    }
+
+    // stackoverflow post:
+    // https://stackoverflow.com/questions/15138353/how-to-read-a-binary-file-into-a-vector-of-unsigned-chars
+    std::ifstream table{file_path};
+    auto instruction_table = std::map<u16, Instruction>{};
+    u16 opcode = 0;
+    std::string type;
+    std::string description;
+    char comma;
+    // TODO: this method would require skipping whitespace
+    while (table >> opcode >> comma >> type >> comma >> description && comma == ',') {
+        instruction_table.emplace(opcode, Instruction(opcode, type, description));
+        const auto& inst = instruction_table[opcode];
+        spdlog::debug("Added to table: {}, {}, {}", inst.opcode, inst.type, inst.description);
+    }
+
+    /* for (std::string line; std::getline(table, line); ) { */
+    /*     auto view = std::string_view(line) */
+    /*         | std::ranges::split_view(",")  */
+    /*         | std::ranges::transform_view([](auto &&rng) { */
+    /*                 return std::string_view(rng); */
+    /*                 }); */
+    /*     auto it = std::begin(view); */
+    /*     u16 opcode = std::stoi(std::string(*it)); */
+    /*     auto type = std::string(*(++it)); */
+    /*     auto description = std::string(*(++it)); */
+    /*     auto instruction = Instruction(opcode, type, description); */
+    /*     instruction_table[opcode] = instruction; */
+    /* } */
+
+    return instruction_table;
 }
 
 
