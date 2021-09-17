@@ -2,6 +2,7 @@
 
 #include <string>
 #include <iostream>
+#include <compare>
 
 #include "common.h"
 
@@ -29,10 +30,9 @@ enum class InstructionType {
 struct Instruction {
    InstructionType type;
    u16 opcode;
-   std::string description;
 };
 
-auto operator==(InstructionType i1, InstructionType i2) -> bool;
+auto operator<=>(InstructionType i1, InstructionType i2) -> std::strong_ordering;
 auto operator<<(std::ostream& os, const InstructionType& i) -> std::ostream&;
 
 
