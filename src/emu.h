@@ -43,6 +43,8 @@ class Emu {
     Window window_;
     Renderer renderer_;
 
+    std::map<InstructionType, std::string> instruction_table_;
+
   public:
     Emu(u8 screen_scale, State state);
 
@@ -51,11 +53,16 @@ class Emu {
     void cycle_forward(u8 cycles_remaining);
     void render();
     void step();
-    u8 handle_event(const SDL_Event &event);
+    auto handle_event(const SDL_Event &event) -> u8;
+
+    auto instruction_table() -> const std::map<InstructionType, std::string>& {
+        return instruction_table_;
+    }
 
     static constexpr std::string_view instruction_table_path = "instruction_table.csv";
-    const std::map<u16, Instruction> instruction_table_;
+
+  private:
 };
 
-std::map<u16, Instruction> load_instruction_file(std::string_view path);
-Rom read_rom_file(std::string_view path);
+auto read_instruction_table(std::string_view path) -> std::map<InstructionType, std::string>;
+auto read_rom_file(std::string_view path) -> Rom;

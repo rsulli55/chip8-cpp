@@ -12,7 +12,7 @@
 Emu::Emu(u8 screen_scale, State state)
     : window_{screen_scale, renderer_},
     renderer_{},
-    instruction_table_{load_instruction_file(instruction_table_path)}
+    instruction_table_{read_instruction_table(instruction_table_path)}
 {}
 
 void Emu::render() {
@@ -115,7 +115,7 @@ void Emu::load_rom(const Rom &rom) {
     chip8_.load_rom(rom);
 }
 
-std::map<u16, Instruction> load_instruction_file(std::string_view path) {
+auto read_instruction_table(std::string_view path) -> std::map<InstructionType, std::string> {
     namespace fs = std::filesystem;
     fs::path file_path{path};
 
@@ -124,40 +124,26 @@ std::map<u16, Instruction> load_instruction_file(std::string_view path) {
         std::terminate();
     }
 
-    // stackoverflow post:
-    // https://stackoverflow.com/questions/15138353/how-to-read-a-binary-file-into-a-vector-of-unsigned-chars
     std::ifstream table{file_path};
-    auto instruction_table = std::map<u16, Instruction>{};
+    auto instruction_table = std::map<InstructionType, std::string>{};
     u16 opcode = 0;
     std::string type;
     std::string description;
-    char comma;
-    // TODO: this method would require skipping whitespace
-    while (table >> opcode >> comma >> type >> comma >> description && comma == ',') {
-        instruction_table.emplace(opcode, Instruction(opcode, type, description));
-        const auto& inst = instruction_table[opcode];
-        spdlog::debug("Added to table: {}, {}, {}", inst.opcode, inst.type, inst.description);
+
+    while (getline(table, type, '\t')) {
+        getline(table, description);
+        const auto inst_type = string_to_instruction_type(type);
+        instruction_table.emplace(inst_type, description);
     }
 
-    /* for (std::string line; std::getline(table, line); ) { */
-    /*     auto view = std::string_view(line) */
-    /*         | std::ranges::split_view(",")  */
-    /*         | std::ranges::transform_view([](auto &&rng) { */
-    /*                 return std::string_view(rng); */
-    /*                 }); */
-    /*     auto it = std::begin(view); */
-    /*     u16 opcode = std::stoi(std::string(*it)); */
-    /*     auto type = std::string(*(++it)); */
-    /*     auto description = std::string(*(++it)); */
-    /*     auto instruction = Instruction(opcode, type, description); */
-    /*     instruction_table[opcode] = instruction; */
-    /* } */
+    /* spdlog::debug("Printing instruction table\n"); */
+    /* for (const auto& [type, desc] : instruction_table) spdlog::debug("{}\t{}\n", type, desc); */
 
     return instruction_table;
 }
 
 
-Rom read_rom_file(std::string_view path) {
+auto read_rom_file(std::string_view path) -> Rom {
     namespace fs = std::filesystem;
     fs::path file_path{path};
 
