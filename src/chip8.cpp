@@ -2,11 +2,9 @@
 #include "common.h"
 #include <algorithm>
 
-Chip8::Chip8() {
-    initialize_font();
-}
+Chip8::Chip8() { initialize_font(); }
 
-u16 Chip8::fetch_with_pc(u16 pc) const noexcept {
+auto Chip8::fetch_with_pc(u16 pc) const noexcept -> u16 {
     // opcodes stored in big endian
     u8 upper_byte = memory_[pc++];
     u8 lower_byte = memory_[pc++];
@@ -15,8 +13,7 @@ u16 Chip8::fetch_with_pc(u16 pc) const noexcept {
     return opcode;
 }
 
-
-u16 Chip8::fetch() noexcept {
+auto Chip8::fetch() noexcept -> u16 {
     // opcodes stored in big endian
     u8 upper_byte = memory_[pc_++];
     u8 lower_byte = memory_[pc_++];
@@ -27,14 +24,13 @@ u16 Chip8::fetch() noexcept {
 
 void Chip8::cycle() noexcept {
     auto opcode = fetch();
-    spdlog::debug("opcode = {:x}", opcode);
     execute(opcode);
 }
 
-void Chip8::load_rom(const Rom& rom) {
-    const auto& data = rom.data_;
-    const auto end = std::min(std::cend(data),
-                              std::cbegin(data) + MEMORY_SIZE - ROM_START);
+void Chip8::load_rom(const Rom &rom) {
+    const auto &data = rom.data_;
+    const auto end =
+        std::min(std::cend(data), std::cbegin(data) + MEMORY_SIZE - ROM_START);
     std::copy(std::cbegin(data), end, std::begin(memory_) + ROM_START);
 }
 
@@ -43,7 +39,6 @@ void Chip8::execute(u16 opcode) noexcept {
     clear_bad_opcode();
 
     u16 first_nibble = nibble(nib::first, opcode);
-    spdlog::debug("In execute(): first_nibble = {:x}", first_nibble);
     switch (first_nibble) {
     case 0x0: {
         // 00E0 instruction
@@ -127,26 +122,25 @@ void Chip8::execute(u16 opcode) noexcept {
     // TODO: increment pc
 }
 
-bool Chip8::screen_equal(const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other) const noexcept {
+auto Chip8::screen_equal(
+    const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other) const noexcept
+    -> bool {
     return std::ranges::equal(screen_, other);
 }
 
 auto Chip8::screen_difference(
     const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other)
     const noexcept {
-    auto differences = std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> {false};
-    auto compute_xor = [](const bool b1, const bool b2) {
-        return b1 != b2;
-    };
-    std::ranges::transform(screen_, other, std::begin(differences), compute_xor);
+    auto differences = std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT>{false};
+    auto compute_xor = [](const bool b1, const bool b2) { return b1 != b2; };
+    std::ranges::transform(screen_, other, std::begin(differences),
+                           compute_xor);
 
     return differences;
 }
 
 // internal operations
-void Chip8::clear_screen() noexcept {
-    std::ranges::fill(screen_, false);
-}
+void Chip8::clear_screen() noexcept { std::ranges::fill(screen_, false); }
 void Chip8::clear_bad_opcode() noexcept { bad_opcode_ = false; }
 void Chip8::initialize_font() {
     std::copy(std::cbegin(FONT), std::cend(FONT),
@@ -156,19 +150,16 @@ void Chip8::initialize_font() {
 // instructions
 // Execute machine language instruction, UNIMPLEMENTED
 void inline Chip8::_0NNN([[maybe_unused]] u16 opcode) noexcept {
-    spdlog::debug("In 0NNN: NNN = {:x}", opcode & 0x0FFF);
     bad_opcode_ = true;
 }
 
 // Clear the screen
 void inline Chip8::_00E0([[maybe_unused]] u16 opcode) noexcept {
-    spdlog::debug("In 00E0");
     clear_screen();
 }
 
 // Return from subroutine popping from stack and setting PC
 void inline Chip8::_00EE([[maybe_unused]] u16 opcode) noexcept {
-    spdlog::debug("In 00EE");
     assert(stack_.size() > 0);
     pc_ = stack_.top();
     stack_.pop();
@@ -176,14 +167,12 @@ void inline Chip8::_00EE([[maybe_unused]] u16 opcode) noexcept {
 
 // Jump to address 0xNNN
 void inline Chip8::_1NNN(u16 opcode) noexcept {
-    spdlog::debug("In 1NNN: NNN = {:x}", opcode & 0x0FFF);
     u16 address = 0x0FFF & opcode;
     pc_ = address;
 }
 
 // Execute subroutine at address 0xNNN pushing current PC onto stack
 void inline Chip8::_2NNN(u16 opcode) noexcept {
-    spdlog::debug("In 2NNN: NNN = {:x}", opcode & 0x0FFF);
     stack_.push(pc_);
     u16 address = 0x0FFF & opcode;
     pc_ = address;
@@ -192,16 +181,12 @@ void inline Chip8::_2NNN(u16 opcode) noexcept {
 // Store 0xNN into register VX
 void inline Chip8::_6XNN(u16 opcode) noexcept {
     const auto second_nibble = nibble(nib::second, opcode);
-    spdlog::debug("In 6XNN: X = {:x}, NN = {:x}", second_nibble,
-                  opcode & 0x00FF);
     V_[second_nibble] = opcode & 0x00FF;
 }
 
 // Add value 0xNN to register VX
 void inline Chip8::_7XNN(u16 opcode) noexcept {
     const auto second_nibble = nibble(nib::second, opcode);
-    spdlog::debug("In 7XNN: X = {:x}, NN = {:x}", second_nibble,
-                  opcode & 0x00FF);
     V_[second_nibble] += opcode & 0x00FF;
 }
 
@@ -230,7 +215,6 @@ void inline Chip8::_8XY3(u16 opcode) noexcept {
 }
 
 void inline Chip8::_ANNN(u16 opcode) noexcept {
-    spdlog::debug("In ANNN: NNN = {:x}", opcode & 0x0FFF);
     I_ = opcode & 0x0FFF;
 }
 
@@ -246,8 +230,6 @@ void inline Chip8::_DXYN(u16 opcode) noexcept {
     const auto y_end =
         std::min(static_cast<u32>(y_start + pixel_height), SCREEN_HEIGHT);
 
-    spdlog::debug("In DXYN x_start = {}, x_end = {}, y_start = {}, y_end = {}",
-                  x_start, x_end, y_start, y_end);
 
     // set VF to 0 before drawing sprite
     V_[0xF] = 0x0;
@@ -265,12 +247,9 @@ void inline Chip8::_DXYN(u16 opcode) noexcept {
                 V_[0xF] = 0x1;
             }
 
-            screen_[screen_ind] = (screen_[screen_ind] != bitmap[col - x_start]);
-            spdlog::debug("In DXYN: setting screen_[{}, {}] to  {}", row, col,
-                          screen_[screen_ind]);
+            screen_[screen_ind] =
+                (screen_[screen_ind] != bitmap[col - x_start]);
         }
     }
 
-    spdlog::debug("Exiting DXYN");
 }
-

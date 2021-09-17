@@ -126,3 +126,6 @@ constexpr std::pair<u32, u32> screen_index_to_row_col(u32 index) {
     const auto col = index - row * Chip8::SCREEN_WIDTH;
     return {row, col};
 }
+
+    
+

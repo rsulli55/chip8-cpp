@@ -15,7 +15,7 @@ const char* const glsl_version = "#version 440";
 enum class nib { first, second, third, fourth };
 
 /// returns the @param which nibble of @param what
-inline u16 nibble(nib which, u16 what) {
+constexpr auto nibble(nib which, u16 what) -> u16 {
     switch (which) {
     case nib::first:
         return (0xF000 & what) >> (4 * 3); // shift down by 3 half-bytes
@@ -30,16 +30,16 @@ inline u16 nibble(nib which, u16 what) {
 }
 
 /// converts a byte into an length 8 array of bools
-inline std::array<bool, 8> byte_to_bitmap(u8 byte) {
+constexpr auto byte_to_bitmap(u8 byte) -> std::array<bool, 8> {
     std::array<bool, 8> to_return = {false};
 
     auto transformed = std::views::iota(0u, 8u) |
                        std::views::transform([&byte](u8 bit) {
-                           return (byte & (1 << bit)) ? true : false;
+                           return (byte & (1 << bit)) != 0;
                        }) |
                        std::views::reverse;
 
-    // reverse it
+    // copy it for returning
     std::copy(std::cbegin(transformed), std::cend(transformed),
               std::begin(to_return));
     return to_return;
