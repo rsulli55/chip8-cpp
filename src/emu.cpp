@@ -60,13 +60,12 @@ u8 Emu::handle_event(const SDL_Event &event) {
             chip8_paused_ = !chip8_paused_;
         }
         else if (chip8_paused_ && keys[SDL_SCANCODE_N] == 1) {
+            push_chip8();
             chip8_.cycle();
             instructions_executed++;
-            new_state_ = true;
-        } else if (keys[SDL_SCANCODE_R] == 1 && chip8s_.size() > 1) {
+        } else if (keys[SDL_SCANCODE_R] == 1 && chip8s_.size() > 0) {
             chip8_paused_ = true;
-            chip8s_.pop_front();
-            chip8_ = chip8s_.front();
+            pop_chip8();
             // we popped a full frame of instructions
             instructions_executed = instructions_per_frame_;
         }
@@ -83,22 +82,16 @@ void Emu::run() {
     u32 current_time = 0;
 
     while (running_) {
+
         while (SDL_PollEvent(&event_) > 0) {
             instructions_executed = handle_event(event_);
-        }
-
-        // append the current chip8 onto chip8s_ if we did not rewind
-        if (new_state_) {
-            chip8s_.emplace_front(chip8_);
-            if (chip8s_.size() > CHIP8_HISTORY_AMOUNT) chip8s_.pop_back();
-            new_state_ = false;
         }
 
         // if not paused we would like to make sure we execute
         // `instructions_per_frame_` instructions before updating display
         if (!chip8_paused_) {
+            push_chip8();
             cycle_forward(instructions_per_frame_ - instructions_executed);
-            new_state_ = true;
             instructions_executed = 0;
         }
         // if we are paused then after we need to reset instructions_executed
@@ -109,7 +102,6 @@ void Emu::run() {
 
         // render a frame
         render();
-
 
         /* frames_rendered++; */
         /* current_time = SDL_GetTicks(); */
@@ -122,6 +114,16 @@ void Emu::run() {
 }
 
 void Emu::load_rom(const Rom &rom) { chip8_.load_rom(rom); }
+
+void inline Emu::push_chip8() {
+    chip8s_.emplace_front(chip8_);
+    if (chip8s_.size() > CHIP8_HISTORY_AMOUNT) chip8s_.pop_back();
+}
+
+void inline Emu::pop_chip8() {
+    chip8_ = chip8s_.front();
+    chip8s_.pop_front();
+}
 
 auto read_rom_file(std::string_view path) -> Rom {
     namespace fs = std::filesystem;

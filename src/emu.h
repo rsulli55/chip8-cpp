@@ -48,10 +48,13 @@ class Emu {
 
     bool running_ = true;
     bool chip8_paused_ = true;
-    bool new_state_ = false;
+    bool new_state_ = true;
 
     Window window_;
     Renderer renderer_;
+
+    void inline push_chip8();
+    void inline pop_chip8();
 };
 
 auto read_rom_file(std::string_view path) -> Rom;
