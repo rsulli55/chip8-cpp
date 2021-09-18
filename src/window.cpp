@@ -134,14 +134,10 @@ void Window::registers_box(const Chip8& chip8) {
     if (ImGui::BeginTable("table_registers", num_cols, flags)) {
         // always show the header row
         ImGui::TableSetupScrollFreeze(0, 1);
-        ImGui::TableSetupColumn("Reg", ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Reg", ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Reg", ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Reg", ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_None);
+        for (int col = 0; col < num_cols / 2; ++col) {
+            ImGui::TableSetupColumn("Reg", ImGuiTableColumnFlags_WidthFixed, text_base_width * 10.0f);
+            ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthFixed, text_base_width * 10.0f);
+        }
         ImGui::TableHeadersRow();
 
         // special registers row
@@ -200,8 +196,8 @@ void Window::instructions_box(const std::vector<u16>& past_opcodes, const Chip8&
     if (ImGui::BeginTable("table_instructions", 3, flags, outer_size)) {
         // always show the header row
         ImGui::TableSetupScrollFreeze(0, 1);
-        ImGui::TableSetupColumn("Opcode", ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Opcode", ImGuiTableColumnFlags_WidthFixed, text_base_width * 10.0f);
+        ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, text_base_width * 10.0f);
         ImGui::TableSetupColumn("Description", ImGuiTableColumnFlags_None);
         ImGui::TableHeadersRow();
 
@@ -241,7 +237,6 @@ void Window::instructions_box(const std::vector<u16>& past_opcodes, const Chip8&
         ImGui::EndTable();
         }
 }
-
 
 void Window::render_ImGui_frame(const std::vector<u16>& past_opcodes, const Chip8& chip8, u32 future_to_show) {
     debug_window_widget(past_opcodes, chip8, future_to_show);
