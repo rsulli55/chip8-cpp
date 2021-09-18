@@ -126,7 +126,7 @@ void Window::registers_box(const Chip8& chip8) {
     const auto text_base_height = ImGui::GetTextLineHeightWithSpacing();
     const auto text_base_width = ImGui::CalcTextSize("A").x;
     const static ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
-        ImGuiTableFlags_NoHostExtendX;
+        ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_SizingFixedSame;
     const auto num_rows = 4;
     const auto num_cols = 8;
     const auto special_reg_bg_color = ImGui::GetColorU32(ImVec4(53/255.0f, 76/255.0f, 140/255.0f, 1.0f));
@@ -135,8 +135,8 @@ void Window::registers_box(const Chip8& chip8) {
         // always show the header row
         ImGui::TableSetupScrollFreeze(0, 1);
         for (int col = 0; col < num_cols / 2; ++col) {
-            ImGui::TableSetupColumn("Reg", ImGuiTableColumnFlags_WidthFixed, text_base_width * 10.0f);
-            ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthFixed, text_base_width * 10.0f);
+            ImGui::TableSetupColumn("Reg", ImGuiTableColumnFlags_None);
+            ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_None);
         }
         ImGui::TableHeadersRow();
 
@@ -189,15 +189,16 @@ void Window::instructions_box(const std::vector<u16>& past_opcodes, const Chip8&
     const auto current_op_bg_color = ImGui::GetColorU32(ImVec4(53/255.0f, 140/255.0f, 79/255.0f, 1.0f));
     const auto future_ops_bg_color = ImGui::GetColorU32(ImVec4(53/255.0f, 76/255.0f, 140/255.0f, 1.0f));
     
-    const static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg |
-        ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_NoHostExtendX;
+    const static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_ScrollX |
+        ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | 
+        ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_SizingFixedSame;
     
     ImVec2 outer_size = ImVec2(0.0f, rows_to_show * text_base_height);
     if (ImGui::BeginTable("table_instructions", 3, flags, outer_size)) {
         // always show the header row
         ImGui::TableSetupScrollFreeze(0, 1);
-        ImGui::TableSetupColumn("Opcode", ImGuiTableColumnFlags_WidthFixed, text_base_width * 10.0f);
-        ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, text_base_width * 10.0f);
+        ImGui::TableSetupColumn("Opcode", ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_None);
         ImGui::TableSetupColumn("Description", ImGuiTableColumnFlags_None);
         ImGui::TableHeadersRow();
 
