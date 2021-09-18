@@ -15,7 +15,7 @@ class Window {
         Window& operator=(const Window&) = delete;
         Window& operator=(Window&&) = delete;
 
-        void render(const std::array<bool, Chip8::SCREEN_WIDTH * Chip8::SCREEN_HEIGHT>& screen);
+        void render(const std::vector<u16>& past_opcodes, const Chip8& chip8, u32 future_to_show);
         void resize();
 
 
@@ -29,10 +29,12 @@ class Window {
     u32 window_width_;
     u32 window_height_;
 
-    u32 init_video();
-    void debug_window_widget();
+    auto init_video() -> u32;
+    void debug_window_widget(const std::vector<u16>& past_opcodes, const Chip8& chip8, u32 future_to_show);
+    void registers_box(const Chip8& chip8);
+    void instructions_box(const std::vector<u16>& past_opcodes, const Chip8& chip8, u32 future_to_show);
     void start_ImGui_frame();
-    void render_ImGui_frame();
+    void render_ImGui_frame(const std::vector<u16>& past_opcodes, const Chip8& chip8, u32 future_to_show);
 
     // constants
     const char *WINDOW_NAME = "Chip8-cpp";

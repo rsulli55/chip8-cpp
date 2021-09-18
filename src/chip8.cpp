@@ -1,8 +1,14 @@
+#include <algorithm>
+#include <fstream>
+#include <filesystem>
+
 #include "chip8.h"
 #include "common.h"
-#include <algorithm>
 
-Chip8::Chip8() { initialize_font(); }
+Chip8::Chip8() : instruction_table_{read_instruction_table(instruction_table_path_)} { 
+    spdlog::debug("Chip8 Constructor called\n"); 
+    initialize_font();
+}
 
 auto Chip8::fetch_with_pc(u16 pc) const noexcept -> u16 {
     // opcodes stored in big endian
@@ -252,4 +258,33 @@ void inline Chip8::_DXYN(u16 opcode) noexcept {
         }
     }
 
+}
+
+auto read_instruction_table(std::string_view path)
+    -> std::map<InstructionType, std::string> {
+    namespace fs = std::filesystem;
+    fs::path file_path{path};
+
+    if (!fs::is_regular_file(file_path)) {
+        spdlog::error("Instruction Table: {} is not a regular file",
+                      file_path.string());
+        std::terminate();
+    }
+
+    std::ifstream table{file_path};
+    auto instruction_table = std::map<InstructionType, std::string>{};
+    std::string type;
+    std::string description;
+
+    while (getline(table, type, '\t')) {
+        getline(table, description);
+        const auto inst_type = string_to_instruction_type(type);
+        instruction_table.emplace(inst_type, description);
+    }
+
+    /* spdlog::debug("Printing instruction table\n"); */
+    /* for (const auto& [type, desc] : instruction_table)
+     * spdlog::debug("{}\t{}\n", type, desc); */
+
+    return instruction_table;
 }

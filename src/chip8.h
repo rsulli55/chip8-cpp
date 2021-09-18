@@ -7,33 +7,46 @@
 #include <ranges>
 #include <stack>
 #include <vector>
+#include <map>
 
 #include "spdlog/spdlog.h"
 
 #include "common.h"
 #include "rom.h"
+#include "instruction.h"
 
 class Chip8 {
   public:
 
     Chip8();
+    ~Chip8() = default;
 
-    u8 V(u8 reg) const noexcept { return V_[reg]; }
-    u16 pc() const noexcept { return pc_; }
-    u16 I() const noexcept { return I_; }
-    const std::stack<u16> &stack() const noexcept { return stack_; }
-    const auto &screen() const noexcept { return screen_; }
-    const auto &memory() const noexcept { return memory_; }
-    u8 sound() const noexcept { return sound_; }
-    u8 delay() const noexcept { return delay_; }
-    bool bad_opcode() const noexcept { return bad_opcode_; }
+    Chip8(const Chip8&) = default;
+    Chip8(Chip8&&) = default;
+
+    auto operator=(const Chip8&) -> Chip8& = default;
+    auto operator=(Chip8&&) -> Chip8& = default;
+
+
+    auto V(u8 reg) const noexcept -> u8 { return V_[reg]; }
+    auto pc() const noexcept -> u16 { return pc_; }
+    auto I() const noexcept -> u16 { return I_; }
+    auto stack() const noexcept -> const std::stack<u16> & { return stack_; }
+    auto screen() const noexcept -> const auto & { return screen_; }
+    auto memory() const noexcept -> const auto & { return memory_; }
+    auto sound() const noexcept -> u8 { return sound_; }
+    auto delay() const noexcept -> u8 { return delay_; }
+    auto bad_opcode() const noexcept -> bool { return bad_opcode_; }
+    auto instruction_table(InstructionType it) const noexcept -> const char* {
+        return instruction_table_.at(it).c_str();
+    }
 
     void load_rom(const Rom& rom);
 
-    u16 fetch_with_pc(u16 pc) const noexcept;
+    auto fetch_with_pc(u16 pc) const noexcept -> u16;
 
 
-    u16 fetch() noexcept;     
+    auto fetch() noexcept -> u16;     
     void execute(u16 opcode) noexcept;
     void cycle() noexcept; 
 
@@ -44,7 +57,7 @@ class Chip8 {
     static constexpr u16 MEMORY_SIZE = 4096u;
 
     // screen helpers
-    bool screen_equal(const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other) const noexcept; 
+    auto screen_equal(const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other) const noexcept -> bool; 
     auto screen_difference(
         const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other)
         const noexcept; 
@@ -115,6 +128,11 @@ class Chip8 {
 
     // bad instruction flag
     bool bad_opcode_ = false;
+
+    // instruction table
+    static constexpr std::string_view instruction_table_path_ =
+        "instruction_table.csv";
+    std::map<InstructionType, std::string> instruction_table_;
 };
 
 constexpr u32 row_col_to_screen_index(u32 row, u32 col) {
@@ -126,6 +144,9 @@ constexpr std::pair<u32, u32> screen_index_to_row_col(u32 index) {
     const auto col = index - row * Chip8::SCREEN_WIDTH;
     return {row, col};
 }
+
+auto read_instruction_table(std::string_view path)
+    -> std::map<InstructionType, std::string>;
 
     
 

@@ -167,3 +167,47 @@ constexpr auto string_to_instruction_type(std::string_view op) -> InstructionTyp
     else return Unknown;
 }
 
+constexpr auto instruction_type_to_string(InstructionType it) -> const char* {
+    using enum InstructionType;
+    // 0
+    if (it == _00E0) return "00E0";
+    else if (it == _00EE) return "00EE";
+    else if (it == _0NNN) return "0NNN";
+    // 1-7
+    else if (it == _1NNN) return "1NNN";
+    else if (it == _2NNN) return "2NNN";
+    else if (it == _3XNN) return "3XNN";
+    else if (it == _4XNN) return "4XNN";
+    else if (it == _5XY0) return "5XY0";
+    else if (it == _6XNN) return "6XNN";
+    else if (it == _7XNN) return "7XNN";
+    // 8
+    else if (it == _8XY0) return "8XY0";
+    else if (it == _8XY1) return "8XY1";
+    else if (it == _8XY2) return "8XY2";
+    else if (it == _8XY3) return "8XY3";
+    else if (it == _8XY4) return "8XY4";
+    else if (it == _8XY5) return "8XY5";
+    else if (it == _8XY6) return "8XY6";
+    else if (it == _8XY7) return "8XY7";
+    else if (it == _8XYE) return "8XYE";
+    // A - D
+    else if (it == ANNN) return "ANNN";
+    else if (it == BNNN) return "BNNN";
+    else if (it == CXNN) return "CXNN";
+    else if (it == DXYN) return "DXYN";
+    // E
+    else if (it == EX9E) return "EX9E";
+    else if (it == EXA1) return "EXA1";
+    // F
+    else if (it == FX07) return "FX07";
+    else if (it == FX0A) return "FX0A";
+    else if (it == FX15) return "FX15";
+    else if (it == FX18) return "FX18";
+    else if (it == FX1E) return "FX1E";
+    else if (it == FX29) return "FX29";
+    else if (it == FX33) return "FX33";
+    else if (it == FX55) return "FX55";
+    else if (it == FX65) return "FX65";
+    else return "Unknown";
+}
