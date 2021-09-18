@@ -276,15 +276,12 @@ auto read_instruction_table(std::string_view path)
     std::string type;
     std::string description;
 
-    while (getline(table, type, '\t')) {
+    while (getline(table, type, ',')) {
         getline(table, description);
+         /* spdlog::debug("{}\t{}\n", type, description);  */
         const auto inst_type = string_to_instruction_type(type);
         instruction_table.emplace(inst_type, description);
     }
-
-    /* spdlog::debug("Printing instruction table\n"); */
-    /* for (const auto& [type, desc] : instruction_table)
-     * spdlog::debug("{}\t{}\n", type, desc); */
 
     return instruction_table;
 }
