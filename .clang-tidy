@@ -10,6 +10,7 @@ Checks: >
     -readability-magic-numbers,
     -readability-uppercase-literal-suffix,
     -readability-braces-around-statements,
+    -readability-convert-member-functions-to-static,
     performance-*,
     bugprone-*
 
