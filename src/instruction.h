@@ -86,8 +86,11 @@ constexpr auto opcode_to_instruction_type(u16 opcode) -> InstructionType {
             return Unknown;
         }
     }
-    case 0x9:
-        return _9XY0;
+    case 0x9: {
+        const auto fourth_nibble = nibble(nib::fourth, opcode);
+        if (fourth_nibble == 0x0) return _9XY0;
+        return Unknown;
+    }
     case 0xA:
         return ANNN;
     case 0xB:
@@ -146,6 +149,8 @@ constexpr auto string_to_instruction_type(std::string_view op) -> InstructionTyp
     else if (op == "8XY6") return _8XY6;
     else if (op == "8XY7") return _8XY7;
     else if (op == "8XYE") return _8XYE;
+    // 9
+    else if (op == "9XY0") return _9XY0;
     // A - D
     else if (op == "ANNN") return ANNN;
     else if (op == "BNNN") return BNNN;

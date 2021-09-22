@@ -81,6 +81,88 @@ boost::ut::suite instructions = [] {
         expect(eq(chip8.pc(), 0x0D1E));
     };
 
+    // Skip the following instruction if the value of register VX equals NN
+    for (u8 reg = 0x0; reg < 0xF; ++reg) {
+        for (u8 value =0x0005; value < 0x00AC; value += 0x0009) {
+            test("3XNN; X = " + std::to_string(reg) +
+                 ", NN = " + std::to_string(value)) = [&chip8, reg, value] {
+                u16 base_store = 0x6000;
+                u16 base_check = 0x3000;
+                u16 op = base_store + (reg << 8) + value;
+                chip8.execute(op);
+                auto pc = chip8.pc();
+                // do not increment pc if VX does not equal NN
+                op = base_check + (reg << 8) + value + 1;
+                chip8.execute(op);
+                expect(eq(chip8.pc(), pc));
+                // increment pc if VX does equal NN
+                op = base_check + (reg << 8) + value;
+                chip8.execute(op);
+                expect(eq(chip8.pc(), pc+2));
+            };
+        }
+    }
+
+    // Skip the following instruction if the value of register VX does not equal NN
+    for (u8 reg = 0x0; reg < 0xF; ++reg) {
+        for (u8 value =0x0005; value < 0x00AC; value += 0x0009) {
+            test("4XNN; X = " + std::to_string(reg) +
+                 ", NN = " + std::to_string(value)) = [&chip8, reg, value] {
+                u16 base_store = 0x6000;
+                u16 base_check = 0x4000;
+                u16 op = base_store + (reg << 8) + value;
+                chip8.execute(op);
+                auto pc = chip8.pc();
+                // increment pc if VX does not equal NN
+                op = base_check + (reg << 8) + value + 1;
+                chip8.execute(op);
+                expect(eq(chip8.pc(), pc+2));
+                pc += 2;
+                // do not increment pc if VX does equal NN
+                op = base_check + (reg << 8) + value;
+                chip8.execute(op);
+                expect(eq(chip8.pc(), pc));
+            };
+        }
+    }
+
+    for (u8 X = 0x0; X < 0xF; ++X) {
+        for (u8 Y = X; Y < 0xF; ++Y) {
+            test("5XY0; X = " + std::to_string(X) +
+                 ", Y = " + std::to_string(Y)) = [&chip8, X, Y] {
+                u16 base_store = 0x6000;
+                u16 base_check = 0x5000;
+                for (auto value : {3, 5, 7, 8}) {
+                    u16 op = base_store + (X << 8) + value;
+                    chip8.execute(op);
+                    op = base_store + (Y << 8) + value;
+                    chip8.execute(op);
+                    // VX and VY are equal, so skip next instruction
+                    auto pc = chip8.pc();
+                    op = base_check + (X << 8) + (Y << 4);
+                    chip8.execute(op);
+                    expect(eq(chip8.pc(), pc + 2));
+                }
+
+                // don't check that are unequal if they are the same register
+                if (X == Y) return;
+
+                for (auto value : {3, 5, 7, 8}) {
+                    u16 op = base_store + (X << 8) + value + 1;
+                    chip8.execute(op);
+                    op = base_store + (Y << 8) + value;
+                    chip8.execute(op);
+                    // VX and VY are not equal equal, so don't skip next instruction
+                    auto pc = chip8.pc();
+                    op = base_check + (X << 8) + (Y << 4);
+                    chip8.execute(op);
+                    expect(eq(chip8.pc(), pc));
+                }
+            };
+        }
+    }
+
+
     // Store number 0xNN in register VX
     "6XNN"_test = [&chip8] {
         chip8.execute(0x6015);
@@ -382,6 +464,44 @@ boost::ut::suite instructions = [] {
                 expect(eq(chip8.V(X), 0x11));
                 chip8.execute(0x8003 + (X << 8) + (X << 4));
                 expect(eq(chip8.V(X), 0x00));
+            };
+        }
+    }
+
+    // 9XY0
+    // Skip the following instruction if the value of register VX is not equal to the value of register VY
+    for (u8 X = 0x0; X < 0xF; ++X) {
+        for (u8 Y = X; Y < 0xF; ++Y) {
+            test("9XY0; X = " + std::to_string(X) +
+                 ", Y = " + std::to_string(Y)) = [&chip8, X, Y] {
+                u16 base_store = 0x6000;
+                u16 base_check = 0x9000;
+                for (auto value : {3, 5, 7, 8}) {
+                    u16 op = base_store + (X << 8) + value;
+                    chip8.execute(op);
+                    op = base_store + (Y << 8) + value;
+                    chip8.execute(op);
+                    // VX and VY are equal, so don't skip next instruction
+                    auto pc = chip8.pc();
+                    op = base_check + (X << 8) + (Y << 4);
+                    chip8.execute(op);
+                    expect(eq(chip8.pc(), pc));
+                }
+
+                // don't check if they are unequal if they are the same register
+                if (X == Y) return;
+
+                for (auto value : {3, 5, 7, 8}) {
+                    u16 op = base_store + (X << 8) + value + 1;
+                    chip8.execute(op);
+                    op = base_store + (Y << 8) + value;
+                    chip8.execute(op);
+                    // VX and VY are not equal, so skip next instruction
+                    auto pc = chip8.pc();
+                    op = base_check + (X << 8) + (Y << 4);
+                    chip8.execute(op);
+                    expect(eq(chip8.pc(), pc + 2));
+                }
             };
         }
     }

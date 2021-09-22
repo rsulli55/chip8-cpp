@@ -4,6 +4,7 @@
 
 #include "chip8.h"
 #include "common.h"
+#include "instruction.h"
 
 Chip8::Chip8(std::map<InstructionType, std::string> instruction_table) :
     instruction_table_{std::move(instruction_table)} {
@@ -52,88 +53,122 @@ void Chip8::execute(u16 opcode) noexcept {
     // clear bad_opcode if it was previously set
     clear_bad_opcode();
 
-    u16 first_nibble = nibble(nib::first, opcode);
-    switch (first_nibble) {
-    case 0x0: {
-        // 00E0 instruction
-        if (opcode == 0x00E0) {
-            _00E0(opcode);
-        }
-        // 00EE instruction
-        else if (opcode == 0x00EE) {
-            _00EE(opcode);
-        }
-        // 0NNN instruction
-        else {
-            _0NNN(opcode);
-        }
+    auto type = opcode_to_instruction_type(opcode);
+
+    switch (type) {
+    case InstructionType::_00E0: 
+        _00E0(opcode);
         break;
-    }
-    case 0x1:
+    case InstructionType::_00EE:
+        _00EE(opcode);
+        break;
+    case InstructionType::_0NNN:
+        _0NNN(opcode);
+        break;
+    case InstructionType::_1NNN:
         _1NNN(opcode);
         break;
-    case 0x2:
+    case InstructionType::_2NNN:
         _2NNN(opcode);
         break;
-    case 0x3:
+    case InstructionType::_3XNN: 
+        _3XNN(opcode);
         break;
-    case 0x4:
+    case InstructionType::_4XNN:
+        _4XNN(opcode);
         break;
-    case 0x5:
+    case InstructionType::_5XY0:
+        _5XY0(opcode);
         break;
-    case 0x6:
+    case InstructionType::_6XNN:
         _6XNN(opcode);
         break;
-    case 0x7:
+    case InstructionType::_7XNN:
         _7XNN(opcode);
         break;
-    case 0x8: {
-        const auto fourth_nibble = nibble(nib::fourth, opcode);
-        switch (fourth_nibble) {
-        case 0x0:
-            _8XY0(opcode);
-            break;
-        case 0x1:
-            _8XY1(opcode);
-            break;
-        case 0x2:
-            _8XY2(opcode);
-            break;
-        case 0x3:
-            _8XY3(opcode);
-            break;
-        case 0x4:
-            break;
-        case 0x5:
-            break;
-        case 0x6:
-            break;
-        case 0x7:
-            break;
-        case 0xE:
-            break;
-        }
+    case InstructionType::_8XY0:
+        _8XY0(opcode);
         break;
-    }
-    case 0x9:
+    case InstructionType::_8XY1:
+        _8XY1(opcode);
         break;
-    case 0xA:
-        _ANNN(opcode);
+    case InstructionType::_8XY2:
+        _8XY2(opcode);
         break;
-    case 0xB:
+    case InstructionType::_8XY3:
+        _8XY3(opcode);
         break;
-    case 0xC:
+    case InstructionType::_8XY4:
+        _8XY4(opcode);
         break;
-    case 0xD:
-        _DXYN(opcode);
+    case InstructionType::_8XY5:
+        _8XY5(opcode);
         break;
-    case 0xE:
+    case InstructionType::_8XY6:
+        _8XY6(opcode);
         break;
-    case 0xF:
+    case InstructionType::_8XY7:
+        _8XY7(opcode);
+        break;
+    case InstructionType::_8XYE:
+        _8XYE(opcode);
+        break;
+    case InstructionType::_9XY0:
+        _9XY0(opcode);
+        break;
+    case InstructionType::ANNN:
+        ANNN(opcode);
+        break;
+    case InstructionType::BNNN:
+        BNNN(opcode);
+        break;
+    case InstructionType::CXNN: 
+        CXNN(opcode);
+        break;
+    case InstructionType::DXYN:
+        DXYN(opcode);
+        break;
+    case InstructionType::EX9E:
+        EX9E(opcode);
+        break;
+    case InstructionType::EXA1:
+        EXA1(opcode);
+        break;
+    case InstructionType::FX07:
+        FX07(opcode);
+        break;
+    case InstructionType::FX0A:
+        FX0A(opcode);
+        break;
+    case InstructionType::FX15:
+        FX15(opcode);
+        break;
+    case InstructionType::FX18:
+        FX18(opcode);
+        break;
+    case InstructionType::FX1E:
+        FX1E(opcode);
+        break;
+    case InstructionType::FX29:
+        FX29(opcode);
+        break;
+    case InstructionType::FX33:
+        FX33(opcode);
+        break;
+    case InstructionType::FX55:
+        FX55(opcode);
+        break;
+    case InstructionType::FX65:
+        FX65(opcode);
+        break;
+    case InstructionType::Unknown:
+        bad_opcode_ = true;
+        break;
+    default:
+        spdlog::error("Unexpected InstructionType in Chip8::execute()\n");
         break;
     }
 
-    // TODO: increment pc
 }
 
 auto Chip8::screen_equal(
@@ -180,62 +215,122 @@ void inline Chip8::_00EE([[maybe_unused]] u16 opcode) noexcept {
 }
 
 // Jump to address 0xNNN
-void inline Chip8::_1NNN(u16 opcode) noexcept {
+void inline Chip8::_1NNN([[maybe_unused]] u16 opcode) noexcept {
     u16 address = 0x0FFF & opcode;
     pc_ = address;
 }
 
 // Execute subroutine at address 0xNNN pushing current PC onto stack
-void inline Chip8::_2NNN(u16 opcode) noexcept {
+void inline Chip8::_2NNN([[maybe_unused]] u16 opcode) noexcept {
     stack_.push_front(pc_);
     u16 address = 0x0FFF & opcode;
     pc_ = address;
 }
 
+// Skip the following instruction if the value of register VX equals NN
+void inline Chip8::_3XNN([[maybe_unused]] u16 opcode) noexcept {
+    const auto second_nibble = nibble(nib::second, opcode);
+    const u8 value = (nibble(nib::third, opcode) << 4) + nibble(nib::fourth, opcode);
+    if (V_[second_nibble] == value) pc_ += 2;
+}
+
+// Skip the following instruction if the value of register VX is not equal to NN
+void inline Chip8::_4XNN([[maybe_unused]] u16 opcode) noexcept {
+    const auto second_nibble = nibble(nib::second, opcode);
+    const u8 value = (nibble(nib::third, opcode) << 4) + nibble(nib::fourth, opcode);
+    if (V_[second_nibble] != value) pc_ += 2;
+}
+
+// Skip the following instruction if the value of register VX is equal to the value of register VY
+void inline Chip8::_5XY0([[maybe_unused]] u16 opcode) noexcept {
+    const auto second_nibble = nibble(nib::second, opcode);
+    const auto third_nibble = nibble(nib::third, opcode);
+
+    if (V_[second_nibble] == V_[third_nibble]) pc_ += 2;
+}
+
 // Store 0xNN into register VX
-void inline Chip8::_6XNN(u16 opcode) noexcept {
+void inline Chip8::_6XNN([[maybe_unused]] u16 opcode) noexcept {
     const auto second_nibble = nibble(nib::second, opcode);
     V_[second_nibble] = opcode & 0x00FF;
 }
 
 // Add value 0xNN to register VX
-void inline Chip8::_7XNN(u16 opcode) noexcept {
+void inline Chip8::_7XNN([[maybe_unused]] u16 opcode) noexcept {
     const auto second_nibble = nibble(nib::second, opcode);
     V_[second_nibble] += opcode & 0x00FF;
 }
 
-void inline Chip8::_8XY0(u16 opcode) noexcept {
+void inline Chip8::_8XY0([[maybe_unused]] u16 opcode) noexcept {
     const auto second_nibble = nibble(nib::second, opcode);
     const auto third_nibble = nibble(nib::third, opcode);
     V_[second_nibble] = V_[third_nibble];
 }
 
-void inline Chip8::_8XY1(u16 opcode) noexcept {
+void inline Chip8::_8XY1([[maybe_unused]] u16 opcode) noexcept {
     const auto second_nibble = nibble(nib::second, opcode);
     const auto third_nibble = nibble(nib::third, opcode);
     V_[second_nibble] |= V_[third_nibble];
 }
 
-void inline Chip8::_8XY2(u16 opcode) noexcept {
+void inline Chip8::_8XY2([[maybe_unused]] u16 opcode) noexcept {
     const auto second_nibble = nibble(nib::second, opcode);
     const auto third_nibble = nibble(nib::third, opcode);
     V_[second_nibble] &= V_[third_nibble];
 }
 
-void inline Chip8::_8XY3(u16 opcode) noexcept {
+void inline Chip8::_8XY3([[maybe_unused]] u16 opcode) noexcept {
     const auto second_nibble = nibble(nib::second, opcode);
     const auto third_nibble = nibble(nib::third, opcode);
     V_[second_nibble] ^= V_[third_nibble];
 }
 
-void inline Chip8::_ANNN(u16 opcode) noexcept {
+void inline Chip8::_8XY4([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+void inline Chip8::_8XY5([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+void inline Chip8::_8XY6([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+void inline Chip8::_8XY7([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+void inline Chip8::_8XYE([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+// 9
+// Skip the following instruction if the value of register VX is not equal to the value of register VY
+void inline Chip8::_9XY0([[maybe_unused]] u16 opcode) noexcept {
+    const auto second_nibble = nibble(nib::second, opcode);
+    const auto third_nibble = nibble(nib::third, opcode);
+
+    if (V_[second_nibble] != V_[third_nibble]) pc_ += 2;
+}
+
+// A - E
+void inline Chip8::ANNN(u16 opcode) noexcept {
     I_ = opcode & 0x0FFF;
+}
+
+void inline Chip8::BNNN([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+void inline Chip8::CXNN([[maybe_unused]] u16 opcode) noexcept {
+    return;
 }
 
 // Draw sprite at position VX, VY with 0xN bytes of sprite data
 // starting at the address stored in I
 // Set VF to 0x01 if any set pixels are changed to unset, and 00 otherwise
-void inline Chip8::_DXYN(u16 opcode) noexcept {
+void inline Chip8::DXYN(u16 opcode) noexcept {
     // get x and y coords from VX, VY modulo screen size
     const auto x_start = V_[nibble(nib::second, opcode)] % SCREEN_WIDTH;
     const auto x_end = std::min(static_cast<u32>(x_start + 8u), SCREEN_WIDTH);
@@ -267,6 +362,55 @@ void inline Chip8::_DXYN(u16 opcode) noexcept {
     }
 
 }
+
+void inline Chip8::EX9E([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+void inline Chip8::EXA1([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+// F
+void inline Chip8::FX07([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+void inline Chip8::FX0A([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+void inline Chip8::FX15([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+void inline Chip8::FX18([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+void inline Chip8::FX1E([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+void inline Chip8::FX29([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+void inline Chip8::FX33([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+void inline Chip8::FX55([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+void inline Chip8::FX65([[maybe_unused]] u16 opcode) noexcept {
+    return;
+}
+
+
+
+
 
 auto read_instruction_table(std::string_view path)
     -> std::map<InstructionType, std::string> {

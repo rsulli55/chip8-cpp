@@ -66,6 +66,8 @@ boost::ut::suite helpers = [] {
         expect(eq(string_to_instruction_type("8XY6"), _8XY6));
         expect(eq(string_to_instruction_type("8XY7"), _8XY7));
         expect(eq(string_to_instruction_type("8XYE"), _8XYE));
+        // 9 
+        expect(eq(string_to_instruction_type("9XY0"), _9XY0));
         // A - D
         expect(eq(string_to_instruction_type("ANNN"), ANNN));
         expect(eq(string_to_instruction_type("BNNN"), BNNN));
@@ -169,6 +171,10 @@ boost::ut::suite helpers = [] {
         expect(eq(opcode_to_instruction_type(0x8DBE), _8XYE));
         expect(eq(opcode_to_instruction_type(0x827E), _8XYE));
         expect(eq(opcode_to_instruction_type(0x8A4E), _8XYE));
+        // 9
+        expect(eq(opcode_to_instruction_type(0x9EF0), _9XY0));
+        expect(eq(opcode_to_instruction_type(0x9A20), _9XY0));
+        expect(eq(opcode_to_instruction_type(0x9C40), _9XY0));
         // A - D
         expect(eq(opcode_to_instruction_type(0xAAAA), ANNN));
         expect(eq(opcode_to_instruction_type(0xABDB), ANNN));
@@ -238,6 +244,7 @@ boost::ut::suite helpers = [] {
         expect(eq(opcode_to_instruction_type(0xEACE), Unknown));
         expect(eq(opcode_to_instruction_type(0x8AB8), Unknown));
         expect(eq(opcode_to_instruction_type(0x8129), Unknown));
+        expect(eq(opcode_to_instruction_type(0x9129), Unknown));
         expect(eq(opcode_to_instruction_type(0xFA27), Unknown));
     };
 };

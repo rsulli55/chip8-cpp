@@ -115,20 +115,46 @@ class Chip8 {
     void initialize_font(); 
 
     /// instructions
+    // 0 - 7
     void inline _0NNN([[maybe_unused]] u16 opcode) noexcept;
     void inline _00E0([[maybe_unused]] u16 opcode) noexcept;
     void inline _00EE([[maybe_unused]] u16 opcode) noexcept;
-    void inline _1NNN(u16 opcode) noexcept;
-    void inline _2NNN(u16 opcode) noexcept;
-    void inline _6XNN(u16 opcode) noexcept;
-    void inline _7XNN(u16 opcode) noexcept;
-    void inline _8XY0(u16 opcode) noexcept;
-    void inline _8XY1(u16 opcode) noexcept;
-    void inline _8XY2(u16 opcode) noexcept;
-    void inline _8XY3(u16 opcode) noexcept;
-
-    void inline _ANNN(u16 opcode) noexcept;
-    void inline _DXYN(u16 opcode) noexcept;
+    void inline _1NNN([[maybe_unused]] u16 opcode) noexcept;
+    void inline _2NNN([[maybe_unused]] u16 opcode) noexcept;
+    void inline _3XNN([[maybe_unused]] u16 opcode) noexcept;
+    void inline _4XNN([[maybe_unused]] u16 opcode) noexcept;
+    void inline _5XY0([[maybe_unused]] u16 opcode) noexcept;
+    void inline _6XNN([[maybe_unused]] u16 opcode) noexcept;
+    void inline _7XNN([[maybe_unused]] u16 opcode) noexcept;
+    // 8
+    void inline _8XY0([[maybe_unused]] u16 opcode) noexcept;
+    void inline _8XY1([[maybe_unused]] u16 opcode) noexcept;
+    void inline _8XY2([[maybe_unused]] u16 opcode) noexcept;
+    void inline _8XY3([[maybe_unused]] u16 opcode) noexcept;
+    void inline _8XY4([[maybe_unused]] u16 opcode) noexcept;
+    void inline _8XY5([[maybe_unused]] u16 opcode) noexcept;
+    void inline _8XY6([[maybe_unused]] u16 opcode) noexcept;
+    void inline _8XY7([[maybe_unused]] u16 opcode) noexcept;
+    void inline _8XYE([[maybe_unused]] u16 opcode) noexcept;
+    // 9
+    void inline _9XY0([[maybe_unused]] u16 opcode) noexcept;
+    // A - E
+    void inline ANNN([[maybe_unused]] u16 opcode) noexcept;
+    void inline BNNN([[maybe_unused]] u16 opcode) noexcept;
+    void inline CXNN([[maybe_unused]] u16 opcode) noexcept;
+    void inline DXYN([[maybe_unused]] u16 opcode) noexcept;
+    void inline EX9E([[maybe_unused]] u16 opcode) noexcept;
+    void inline EXA1([[maybe_unused]] u16 opcode) noexcept;
+    // F
+    void inline FX07([[maybe_unused]] u16 opcode) noexcept;
+    void inline FX0A([[maybe_unused]] u16 opcode) noexcept;
+    void inline FX15([[maybe_unused]] u16 opcode) noexcept;
+    void inline FX18([[maybe_unused]] u16 opcode) noexcept;
+    void inline FX1E([[maybe_unused]] u16 opcode) noexcept;
+    void inline FX29([[maybe_unused]] u16 opcode) noexcept;
+    void inline FX33([[maybe_unused]] u16 opcode) noexcept;
+    void inline FX55([[maybe_unused]] u16 opcode) noexcept;
+    void inline FX65([[maybe_unused]] u16 opcode) noexcept;
 
     // bad instruction flag
     bool bad_opcode_ = false;
