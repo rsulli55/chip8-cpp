@@ -11,8 +11,10 @@
 #include "emu.h"
 #include "instruction.h"
 
-Emu::Emu(u8 screen_scale)
-    : window_{screen_scale, renderer_}, renderer_{} {}
+Emu::Emu(Chip8 chip8, u8 screen_scale)
+    : chip8_{std::move(chip8)},
+    window_{screen_scale, renderer_}, 
+    renderer_{} {}
 
 void Emu::render() {
     auto past_ops = build_past_opcodes(chip8s_, MAX_PAST_OPS);

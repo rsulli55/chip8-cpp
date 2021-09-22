@@ -5,7 +5,7 @@
 #include <bits/ranges_algo.h>
 #include <cstdint>
 #include <ranges>
-#include <stack>
+#include <deque>
 #include <vector>
 #include <map>
 
@@ -19,6 +19,7 @@ class Chip8 {
   public:
 
     Chip8();
+    Chip8(std::map<InstructionType, std::string> instruction_table);
     ~Chip8() = default;
 
     Chip8(const Chip8&) = default;
@@ -31,13 +32,13 @@ class Chip8 {
     auto V(u8 reg) const noexcept -> u8 { return V_[reg]; }
     auto pc() const noexcept -> u16 { return pc_; }
     auto I() const noexcept -> u16 { return I_; }
-    auto stack() const noexcept -> const std::stack<u16> & { return stack_; }
+    auto stack() const noexcept -> const std::deque<u16> & { return stack_; }
     auto screen() const noexcept -> const auto & { return screen_; }
     auto memory() const noexcept -> const auto & { return memory_; }
     auto sound() const noexcept -> u8 { return sound_; }
     auto delay() const noexcept -> u8 { return delay_; }
     auto bad_opcode() const noexcept -> bool { return bad_opcode_; }
-    auto instruction_table(InstructionType it) const noexcept -> const char* {
+    auto instruction_table(InstructionType it) const -> const char* {
         return instruction_table_.at(it).c_str();
     }
 
@@ -99,7 +100,10 @@ class Chip8 {
 
     // stack
     // used for storing 16-bit addresses
-    std::stack<u16> stack_;
+    std::deque<u16> stack_{};
+
+    // instruction table
+    std::map<InstructionType, std::string> instruction_table_;
 
     // timers
     u8 sound_ = 0x0;
@@ -128,11 +132,6 @@ class Chip8 {
 
     // bad instruction flag
     bool bad_opcode_ = false;
-
-    // instruction table
-    static constexpr std::string_view instruction_table_path_ =
-        "instruction_table.csv";
-    std::map<InstructionType, std::string> instruction_table_;
 };
 
 constexpr u32 row_col_to_screen_index(u32 row, u32 col) {

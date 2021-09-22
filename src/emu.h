@@ -20,7 +20,7 @@
 
 class Emu {
    public:
-    Emu(u8 screen_scale);
+    Emu(Chip8 chip8, u8 screen_scale);
 
     void load_rom(const Rom& rom);
     void run();
@@ -36,7 +36,7 @@ class Emu {
 
    private:
     SDL_Event event_;
-    std::deque<Chip8> chip8s_;
+    std::deque<Chip8> chip8s_{};
     Chip8 chip8_;
 
     // TODO: move some of these to a Settings struct

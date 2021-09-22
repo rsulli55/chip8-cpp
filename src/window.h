@@ -21,8 +21,8 @@ class Window {
 
 
     private: 
-    SDL_Window *window_;
-    SDL_GLContext gl_context_;
+    SDL_Window *window_ = nullptr;
+    SDL_GLContext gl_context_ = nullptr;
     Renderer& renderer_;
 
     u8 screen_scale_;

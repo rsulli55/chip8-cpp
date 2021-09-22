@@ -5,13 +5,21 @@
 #include "chip8.h"
 #include "common.h"
 
-Chip8::Chip8() : instruction_table_{read_instruction_table(instruction_table_path_)} { 
+Chip8::Chip8(std::map<InstructionType, std::string> instruction_table) :
+    instruction_table_{std::move(instruction_table)} {
+    spdlog::debug("Chip8 Constructor called\n"); 
+    initialize_font();
+}
+
+Chip8::Chip8() : instruction_table_{} { 
     spdlog::debug("Chip8 Constructor called\n"); 
     initialize_font();
 }
 
 auto Chip8::fetch_with_pc(u16 pc) const noexcept -> u16 {
     // opcodes stored in big endian
+    const auto unknown_instruction = 0x8AA8;
+    if (pc > MEMORY_SIZE) return unknown_instruction;
     u8 upper_byte = memory_[pc++];
     u8 lower_byte = memory_[pc++];
     u16 opcode = (upper_byte << 8) + lower_byte;
@@ -167,8 +175,8 @@ void inline Chip8::_00E0([[maybe_unused]] u16 opcode) noexcept {
 // Return from subroutine popping from stack and setting PC
 void inline Chip8::_00EE([[maybe_unused]] u16 opcode) noexcept {
     assert(stack_.size() > 0);
-    pc_ = stack_.top();
-    stack_.pop();
+    pc_ = stack_.front();
+    stack_.pop_front();
 }
 
 // Jump to address 0xNNN
@@ -179,7 +187,7 @@ void inline Chip8::_1NNN(u16 opcode) noexcept {
 
 // Execute subroutine at address 0xNNN pushing current PC onto stack
 void inline Chip8::_2NNN(u16 opcode) noexcept {
-    stack_.push(pc_);
+    stack_.push_front(pc_);
     u16 address = 0x0FFF & opcode;
     pc_ = address;
 }

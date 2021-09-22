@@ -7,7 +7,9 @@
 int main(int argc, char *argv[]) {
 
     spdlog::set_level(spdlog::level::debug);
-    Emu emu{24};
+    static constexpr std::string_view instr_path = "instruction_table.csv";
+
+    Emu emu{Chip8{read_instruction_table(instr_path)}, 24};
 
     const auto rom = read_rom_file("ibm_logo.ch8");
     emu.load_rom(rom);
