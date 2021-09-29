@@ -1,9 +1,10 @@
+#pragma once
+
 #include "SDL.h"
 #include "spdlog/spdlog.h"
 
 #include <SDL_pixels.h>
 #include <SDL_render.h>
-#include <cstdlib>
 #include <deque>
 #include <exception>
 #include <filesystem>
@@ -17,10 +18,11 @@
 #include "renderer.h"
 #include "rom.h"
 #include "window.h"
+#include "settings.h"
 
 class Emu {
    public:
-    Emu(Chip8 chip8, u8 screen_scale);
+    Emu(Chip8 chip8, Settings settings);
 
     void load_rom(const Rom& rom);
     void run();
@@ -30,21 +32,14 @@ class Emu {
     auto handle_event(const SDL_Event& event) -> u8;
 
 
-    static constexpr u32 CHIP8_HISTORY_AMOUNT = 200;
-    static constexpr u32 MAX_PAST_OPS = 35;
-    static constexpr u32 FUTURE_OPS = 15;
+
 
    private:
     SDL_Event event_;
     std::deque<Chip8> chip8s_{};
     Chip8 chip8_;
 
-    // TODO: move some of these to a Settings struct
-    /* u8 screen_scale_; */
-    /* u32 window_width_; */
-    /* u32 window_height_; */
-    u32 frames_per_second_ = 60;
-    u32 instructions_per_frame_ = 10;
+    Settings settings_;
 
     bool running_ = true;
     bool chip8_paused_ = true;
@@ -52,6 +47,7 @@ class Emu {
 
     Window window_;
     Renderer renderer_;
+
 
     void inline push_chip8();
     void inline pop_chip8();

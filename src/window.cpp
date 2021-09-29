@@ -13,11 +13,8 @@ Window::Window(u8 screen_scale, Renderer& renderer) :
     window_width_{Chip8::SCREEN_WIDTH * screen_scale},
     window_height_{Chip8::SCREEN_HEIGHT * screen_scale},
     renderer_{renderer} {
-        u32 ec = init_video();
-        if (ec!= 0) {
-            spdlog::error("initializing video failed, exiting.");
-            std::terminate();
-        }
+        init_video();
+        init_audio();
     }
 
 Window::~Window() {
@@ -32,6 +29,10 @@ Window::~Window() {
     SDL_GL_DeleteContext(gl_context_);
     spdlog::debug("Deleting SDL Window");
     SDL_DestroyWindow(window_);
+    spdlog::debug("Closing audio device");
+    SDL_CloseAudioDevice(audio_device_);
+    spdlog::debug("Freeing audio buffer");
+    SDL_FreeWAV(beep_buffer_);
     spdlog::debug("Calling SDL Quit");
     SDL_Quit();
 }
@@ -52,11 +53,21 @@ void Window::resize() {
     glViewport(0, 0, width, height);
 }
 
+void Window::play_audio() {
+    SDL_PauseAudioDevice(audio_device_, 0);
+    // requeue audio
+    if (SDL_QueueAudio(audio_device_, beep_buffer_, beep_len_) < 0) {
+        spdlog::error("Could not queue audio\n");
+        spdlog::error("Error: {}", SDL_GetError());
+    }
+}
 
-u32 Window::init_video() {
+
+void Window::init_video() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        spdlog::error("Could not initialize SDL\nError: %s\n", SDL_GetError());
-        return 10;
+        spdlog::error("Could not initialize SDL");
+        spdlog::error("Error: {}\n", SDL_GetError());
+        std::terminate();
     }
 
     // configure OpenGL settings
@@ -73,9 +84,9 @@ u32 Window::init_video() {
     window_ = SDL_CreateWindow(WINDOW_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
             window_width_, window_height_, window_flags);
     if (window_ == nullptr) {
-        spdlog::error("Window could not be created!\nError: %s\n",
-                      SDL_GetError());
-        return 20;
+        spdlog::error("Window could not be created!");
+        spdlog::error("Error: {}\n", SDL_GetError());
+        std::terminate();
     }
     gl_context_ = SDL_GL_CreateContext(window_);
     SDL_GL_MakeCurrent(window_, gl_context_);
@@ -104,8 +115,38 @@ u32 Window::init_video() {
     // Setup Platform/Renderer backends
     ImGui_ImplSDL2_InitForOpenGL(window_, gl_context_);
     ImGui_ImplOpenGL3_Init(glsl_version);
+}
 
-    return 0;
+void Window::init_audio() {
+    if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
+        spdlog::error("Could not init SDL Audio subsystem\n");
+        spdlog::error("Error: {}", SDL_GetError());
+        std::terminate();
+    }
+
+    if(SDL_LoadWAV(beep_file_name_, &beep_spec_, &beep_buffer_, &beep_len_) == nullptr) {
+        spdlog::error("Could not open {}\n", beep_file_name_);
+        spdlog::error("Error: {}", SDL_GetError());
+        std::terminate();
+    }
+
+    spdlog::debug("Spec channels = {}, silence = {}, samples = {}, size = {}, format = {}",
+            beep_spec_.channels, beep_spec_.silence, beep_spec_.samples, beep_spec_.size, beep_spec_.format);
+
+    spdlog::debug("SDL found {} audio devices", SDL_GetNumAudioDevices(0));
+    audio_device_ = SDL_OpenAudioDevice(nullptr, 0, &beep_spec_, &beep_spec_, SDL_AUDIO_ALLOW_ANY_CHANGE);
+
+    if (audio_device_ == 0) {
+        spdlog::error("Could not open SDL audio device\n");
+        spdlog::error("Error: {}", SDL_GetError());
+        std::terminate();
+    }
+
+    if (SDL_QueueAudio(audio_device_, beep_buffer_, beep_len_) < 0) {
+        spdlog::error("Could not queue audio\n");
+        spdlog::error("Error: {}", SDL_GetError());
+        std::terminate();
+    }
 }
 
 void Window::start_ImGui_frame() {

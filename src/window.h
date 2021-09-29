@@ -17,6 +17,7 @@ class Window {
 
         void render(const std::vector<u16>& past_opcodes, const Chip8& chip8, u32 future_to_show);
         void resize();
+        void play_audio();
 
 
 
@@ -25,11 +26,19 @@ class Window {
     SDL_GLContext gl_context_ = nullptr;
     Renderer& renderer_;
 
+    // SDL sound stuff
+    SDL_AudioSpec beep_spec_;
+    u32 beep_len_ = 0;
+    u8* beep_buffer_ = nullptr;
+    static constexpr const char* beep_file_name_ = "beep.wav";
+    SDL_AudioDeviceID audio_device_;
+
     u8 screen_scale_;
     u32 window_width_;
     u32 window_height_;
 
-    auto init_video() -> u32;
+    void init_video();
+    void init_audio();
     void debug_window_widget(const std::vector<u16>& past_opcodes, const Chip8& chip8, u32 future_to_show);
     void registers_box(const Chip8& chip8);
     void instructions_box(const std::vector<u16>& past_opcodes, const Chip8& chip8, u32 future_to_show);

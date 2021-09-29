@@ -11,14 +11,16 @@
 #include "emu.h"
 #include "instruction.h"
 
-Emu::Emu(Chip8 chip8, u8 screen_scale)
+Emu::Emu(Chip8 chip8, Settings settings)
     : chip8_{std::move(chip8)},
-    window_{screen_scale, renderer_}, 
-    renderer_{} {}
+    window_{settings.screen_scale, renderer_}, 
+    renderer_{},
+    settings_{settings}
+{}
 
 void Emu::render() {
-    auto past_ops = build_past_opcodes(chip8s_, MAX_PAST_OPS);
-    window_.render(past_ops, chip8_, FUTURE_OPS);
+    auto past_ops = build_past_opcodes(chip8s_, settings_.MAX_PAST_OPS);
+    window_.render(past_ops, chip8_, settings_.FUTURE_OPS);
 }
 
 void Emu::step() {
@@ -69,7 +71,7 @@ u8 Emu::handle_event(const SDL_Event &event) {
             chip8_paused_ = true;
             pop_chip8();
             // we popped a full frame of instructions
-            instructions_executed = instructions_per_frame_;
+            instructions_executed = settings_.instructions_per_frame;
         }
         break;
     }
@@ -82,28 +84,43 @@ void Emu::run() {
     u8 frames_rendered = 0;
     u32 last_time = 0;
     u32 current_time = 0;
+    u32 delay_decrementer = 0;
 
     while (running_) {
 
         while (SDL_PollEvent(&event_) > 0) {
-            instructions_executed = handle_event(event_);
+            instructions_executed += handle_event(event_);
         }
 
         // if not paused we would like to make sure we execute
         // `instructions_per_frame_` instructions before updating display
+        // we also need to accumulate delay_decrementer
         if (!chip8_paused_) {
             push_chip8();
-            cycle_forward(instructions_per_frame_ - instructions_executed);
+            cycle_forward(settings_.instructions_per_frame - instructions_executed);
             instructions_executed = 0;
+            delay_decrementer += settings_.delay_decrement_per_frame;
         }
         // if we are paused then after we need to reset instructions_executed
         // once enough instructions have been stepped through
-        else if (instructions_executed >= instructions_per_frame_) {
+        // when paused we also play a sound each frame
+        else if (instructions_executed >= settings_.instructions_per_frame) {
             instructions_executed = 0;
+            delay_decrementer += settings_.delay_decrement_per_frame;
+        }
+
+        spdlog::debug("Delay decrementer = {}", delay_decrementer);
+
+        // decrement the sound and delay timers and play a sound 
+        if (delay_decrementer > 0) {
+            delay_decrementer--;
+            chip8_.decrement_delay();
+            if (chip8_.decrement_sound()) window_.play_audio();
         }
 
         // render a frame
         render();
+
 
         /* frames_rendered++; */
         /* current_time = SDL_GetTicks(); */
@@ -119,13 +136,14 @@ void Emu::load_rom(const Rom &rom) { chip8_.load_rom(rom); }
 
 void inline Emu::push_chip8() {
     chip8s_.emplace_front(chip8_);
-    if (chip8s_.size() > CHIP8_HISTORY_AMOUNT) chip8s_.pop_back();
+    if (chip8s_.size() > settings_.CHIP8_HISTORY_AMOUNT) chip8s_.pop_back();
 }
 
 void inline Emu::pop_chip8() {
     chip8_ = chip8s_.front();
     chip8s_.pop_front();
 }
+
 
 auto read_rom_file(std::string_view path) -> Rom {
     namespace fs = std::filesystem;
