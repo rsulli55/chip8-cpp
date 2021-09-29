@@ -41,6 +41,9 @@ class Chip8 {
     auto instruction_table(InstructionType it) const -> const char* {
         return instruction_table_.at(it).c_str();
     }
+    
+    auto decrement_delay() noexcept -> bool; 
+    auto decrement_sound() noexcept -> bool; 
 
     void load_rom(const Rom& rom);
 

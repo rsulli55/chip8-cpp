@@ -42,6 +42,20 @@ void Chip8::cycle() noexcept {
     execute(opcode);
 }
 
+auto Chip8::decrement_delay() noexcept -> bool {
+    if (delay_ == 0) return false;
+
+    --delay_;
+    return true;
+}
+
+auto Chip8::decrement_sound() noexcept -> bool {
+    if (sound_ == 0) return false;
+
+    --sound_;
+    return true;
+}
+
 void Chip8::load_rom(const Rom &rom) {
     const auto &data = rom.data_;
     const auto end =
