@@ -299,24 +299,69 @@ void inline Chip8::_8XY3([[maybe_unused]] u16 opcode) noexcept {
     V_[second_nibble] ^= V_[third_nibble];
 }
 
+// Add the value of register VY to register VX
+// Set VF to 01 if a carry occurs
+// Set VF to 00 if a carry does not occur
 void inline Chip8::_8XY4([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    const auto third_nibble = nibble(nib::third, opcode);
+    V_[0xF] = 0;
+    u16 sum = V_[second_nibble] + V_[third_nibble];
+    V_[second_nibble] = sum & (0xFF);
+    if ((sum & 0xFF00) != 0) V_[0xF] = 1; 
 }
 
+// Subtract the value of register VY from register VX
+// Set VF to 00 if a borrow occurs
+// Set VF to 01 if a borrow does not occur
 void inline Chip8::_8XY5([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    const auto third_nibble = nibble(nib::third, opcode);
+    // if VY > VX then VX - VY = 0x100 + VX - VY (mod 0x100)
+    if (V_[third_nibble] > V_[second_nibble]) {
+        V_[0xF] = 0;
+        V_[second_nibble] = (V_[second_nibble] + (1 << 8)) - V_[third_nibble];
+    }
+    else {
+        V_[0xF] = 1;
+        V_[second_nibble] -= V_[third_nibble];
+    }
 }
-
+// Store the value of register VY shifted right one bit in register VX
+// Set register VF to the least significant bit prior to the shift
+// VY is unchanged
 void inline Chip8::_8XY6([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    const auto third_nibble = nibble(nib::third, opcode);
+    V_[0xF] = V_[third_nibble] & 0x01;
+    V_[second_nibble] = V_[third_nibble] >> 1;
 }
 
+// Set register VX to the value of VY minus VX
+// Set VF to 00 if a borrow occurs
+// Set VF to 01 if a borrow does not occur
 void inline Chip8::_8XY7([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    const auto third_nibble = nibble(nib::third, opcode);
+    // if VX > VY then VY - VX = 0x100 + VX - VY (mod 0x100)
+    if (V_[second_nibble] > V_[third_nibble]) {
+        V_[0xF] = 0;
+        V_[second_nibble] = (V_[third_nibble] + (1 << 8)) - V_[second_nibble];
+    }
+    else {
+        V_[0xF] = 1;
+        V_[second_nibble] = V_[third_nibble] - V_[second_nibble];
+    }
 }
 
+// Store the value of register VY shifted left one bit in register VX
+// Set register VF to the most significant bit prior to the shift
+// VY is unchanged
 void inline Chip8::_8XYE([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    const auto third_nibble = nibble(nib::third, opcode);
+    V_[0xF] = (V_[third_nibble] & 0x80) >> 7;
+    V_[second_nibble] = (V_[third_nibble] << 1) & 0xFF;
 }
 
 // 9

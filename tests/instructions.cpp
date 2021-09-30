@@ -468,6 +468,265 @@ boost::ut::suite instructions = [] {
         }
     }
 
+    // 8XY4 adds the value of register VY to register VX
+    // Sets VF to 1 if a carry occurs and 0 otherwise
+    // we do not want to include VF in the testing
+    for (u8 X = 0; X < 0xF; ++X) {
+        for (u8 Y = X + 1; Y < 0xF; ++Y) {
+            test("8XY4; X = " + std::to_string(X) +
+                 ", Y = " + std::to_string(Y)) = [&chip8, X, Y] {
+                chip8.execute(0x6001 + (Y << 8));
+                expect(eq(chip8.V(Y), 0x01));
+                chip8.execute(0x60FF + (X << 8));
+                expect(eq(chip8.V(X), 0xFF));
+                chip8.execute(0x8004 + (X << 8) + (Y << 4));
+                expect(eq(chip8.V(X), 0x00));
+                expect(eq(chip8.V(0xF), 0x01));
+
+                chip8.execute(0x60F0 + (Y << 8));
+                expect(eq(chip8.V(Y), 0xF0));
+                chip8.execute(0x600F + (X << 8));
+                expect(eq(chip8.V(X), 0x0F));
+                chip8.execute(0x8004 + (X << 8) + (Y << 4));
+                expect(eq(chip8.V(X), 0xFF));
+                expect(eq(chip8.V(0xF), 0x00));
+
+                chip8.execute(0x60BA + (Y << 8));
+                expect(eq(chip8.V(Y), 0xBA));
+                chip8.execute(0x604C + (X << 8));
+                expect(eq(chip8.V(X), 0x4C));
+                chip8.execute(0x8004 + (X << 8) + (Y << 4));
+                // 0xBA + 0x4C = 0x106
+                expect(eq(chip8.V(X), 0x06));
+                expect(eq(chip8.V(0xF), 0x01));
+
+                // test 8XX4
+                chip8.execute(0x6011 + (X << 8));
+                expect(eq(chip8.V(X), 0x11));
+                chip8.execute(0x8004 + (X << 8) + (X << 4));
+                expect(eq(chip8.V(X), 0x22));
+                expect(eq(chip8.V(0xF), 0x00));
+            };
+        }
+    }
+
+    // 8XY5 subtract the value of register VY from register VX
+    // Sets VF to 0 if a borrow occurs and 1 if a borrow does occur
+    // we do not want to include VF in the testing
+    for (u8 X = 0; X < 0xF; ++X) {
+        for (u8 Y = X + 1; Y < 0xF; ++Y) {
+            test("8XY5; X = " + std::to_string(X) +
+                 ", Y = " + std::to_string(Y)) = [&chip8, X, Y] {
+                chip8.execute(0x6001 + (Y << 8));
+                expect(eq(chip8.V(Y), 0x01));
+                chip8.execute(0x60FF + (X << 8));
+                expect(eq(chip8.V(X), 0xFF));
+                chip8.execute(0x8005 + (X << 8) + (Y << 4));
+                // 0xFF - 0x01 = 0xFE
+                expect(eq(chip8.V(X), 0xFE));
+                expect(eq(chip8.V(0xF), 0x01));
+
+                chip8.execute(0x60F0 + (Y << 8));
+                expect(eq(chip8.V(Y), 0xF0));
+                chip8.execute(0x600F + (X << 8));
+                expect(eq(chip8.V(X), 0x0F));
+                chip8.execute(0x8005 + (X << 8) + (Y << 4));
+                // 0x0F - 0xF0 = 0x10F - 0xF0 (mod 0x100) = 0x1F (mod 0x100)
+                expect(eq(chip8.V(X), 0x1F));
+                expect(eq(chip8.V(0xF), 0x00));
+
+                chip8.execute(0x6013 + (Y << 8));
+                expect(eq(chip8.V(Y), 0x13));
+                chip8.execute(0x60A2 + (X << 8));
+                expect(eq(chip8.V(X), 0xA2));
+                chip8.execute(0x8005 + (X << 8) + (Y << 4));
+                // 0xA2 - 0x13 = 0x8F
+                expect(eq(chip8.V(X), 0x8F));
+                expect(eq(chip8.V(0xF), 0x01));
+
+                chip8.execute(0x60BA + (Y << 8));
+                expect(eq(chip8.V(Y), 0xBA));
+                chip8.execute(0x604C + (X << 8));
+                expect(eq(chip8.V(X), 0x4C));
+                chip8.execute(0x8005 + (X << 8) + (Y << 4));
+                // 0x4C - 0xBA = 0x14C - 0xBA (mod 0x100) = 0x92 (mod 0x100) 
+                expect(eq(chip8.V(X), 0x92));
+                expect(eq(chip8.V(0xF), 0x00));
+
+                // test 8XX5
+                chip8.execute(0x6011 + (X << 8));
+                expect(eq(chip8.V(X), 0x11));
+                chip8.execute(0x8005 + (X << 8) + (X << 4));
+                expect(eq(chip8.V(X), 0x00));
+                expect(eq(chip8.V(0xF), 0x01));
+            };
+        }
+    }
+
+    // 8XY6 store the value of register VY shifted right one bit in register VX
+    // Set register VF to the least significant bit prior to the shift
+    // we do not want to include VF in the testing
+    for (u8 X = 0; X < 0xF; ++X) {
+        for (u8 Y = X + 1; Y < 0xF; ++Y) {
+            test("8XY6; X = " + std::to_string(X) +
+                 ", Y = " + std::to_string(Y)) = [&chip8, X, Y] {
+                chip8.execute(0x6001 + (Y << 8));
+                expect(eq(chip8.V(Y), 0x01));
+                chip8.execute(0x60FF + (X << 8));
+                expect(eq(chip8.V(X), 0xFF));
+                chip8.execute(0x8006 + (X << 8) + (Y << 4));
+                // 0xFF - 0x01 = 0xFE
+                expect(eq(chip8.V(X), 0x00));
+                expect(eq(chip8.V(0xF), 0x01));
+
+                chip8.execute(0x60F0 + (Y << 8));
+                expect(eq(chip8.V(Y), 0xF0));
+                chip8.execute(0x600F + (X << 8));
+                expect(eq(chip8.V(X), 0x0F));
+                chip8.execute(0x8006 + (X << 8) + (Y << 4));
+                // 0xF0 >> 1 = 0x7F
+                expect(eq(chip8.V(X), 0x78));
+                expect(eq(chip8.V(0xF), 0x00));
+
+                chip8.execute(0x6013 + (Y << 8));
+                expect(eq(chip8.V(Y), 0x13));
+                chip8.execute(0x60A2 + (X << 8));
+                expect(eq(chip8.V(X), 0xA2));
+                chip8.execute(0x8006 + (X << 8) + (Y << 4));
+                // 0x13 >> 1 = 0x09
+                expect(eq(chip8.V(X), 0x09));
+                expect(eq(chip8.V(0xF), 0x01));
+
+                chip8.execute(0x60BA + (Y << 8));
+                expect(eq(chip8.V(Y), 0xBA));
+                chip8.execute(0x604C + (X << 8));
+                expect(eq(chip8.V(X), 0x4C));
+                chip8.execute(0x8006 + (X << 8) + (Y << 4));
+                // 0xBA >> 1 = 0x5D
+                expect(eq(chip8.V(X), 0x5D));
+                expect(eq(chip8.V(0xF), 0x00));
+
+                // test 8XX6
+                chip8.execute(0x6011 + (X << 8));
+                expect(eq(chip8.V(X), 0x11));
+                chip8.execute(0x8006 + (X << 8) + (X << 4));
+                // 0x11 >> 1 = 0x0F
+                expect(eq(chip8.V(X), 0x08));
+                expect(eq(chip8.V(0xF), 0x01));
+            };
+        }
+    }
+
+    // 8XY7 set the register VX to the value of VY minus VX
+    // Set register VF to 0 if borrow occurs, otherwise 1
+    // we do not want to include VF in the testing
+    for (u8 X = 0; X < 0xF; ++X) {
+        for (u8 Y = X + 1; Y < 0xF; ++Y) {
+            test("8XY7; X = " + std::to_string(X) +
+                 ", Y = " + std::to_string(Y)) = [&chip8, X, Y] {
+                chip8.execute(0x6001 + (Y << 8));
+                expect(eq(chip8.V(Y), 0x01));
+                chip8.execute(0x60FF + (X << 8));
+                expect(eq(chip8.V(X), 0xFF));
+                chip8.execute(0x8007 + (X << 8) + (Y << 4));
+                // 0x01 - 0xFF = 0x101 - 0xFF (mod 0x100) = 0x2 (mod 0x100)
+                expect(eq(chip8.V(X), 0x02));
+                expect(eq(chip8.V(0xF), 0x00));
+
+                chip8.execute(0x60F0 + (Y << 8));
+                expect(eq(chip8.V(Y), 0xF0));
+                chip8.execute(0x600F + (X << 8));
+                expect(eq(chip8.V(X), 0x0F));
+                chip8.execute(0x8007 + (X << 8) + (Y << 4));
+                // 0xF0 - 0x0F = 0xE1
+                expect(eq(chip8.V(X), 0xE1));
+                expect(eq(chip8.V(0xF), 0x01));
+
+                chip8.execute(0x6013 + (Y << 8));
+                expect(eq(chip8.V(Y), 0x13));
+                chip8.execute(0x60A2 + (X << 8));
+                expect(eq(chip8.V(X), 0xA2));
+                chip8.execute(0x8007 + (X << 8) + (Y << 4));
+                // 0x13 - 0xA2 = 0x113 - 0xA2 (mod 0x100) = 0x71 (mod 0x100)
+                expect(eq(chip8.V(X), 0x71));
+                expect(eq(chip8.V(0xF), 0x00));
+
+                chip8.execute(0x60BA + (Y << 8));
+                expect(eq(chip8.V(Y), 0xBA));
+                chip8.execute(0x604C + (X << 8));
+                expect(eq(chip8.V(X), 0x4C));
+                chip8.execute(0x8007 + (X << 8) + (Y << 4));
+                // 0xBA - 0x4C = 0x6E
+                expect(eq(chip8.V(X), 0x6E));
+                expect(eq(chip8.V(0xF), 0x01));
+
+                // test 8XX7
+                chip8.execute(0x6011 + (X << 8));
+                expect(eq(chip8.V(X), 0x11));
+                chip8.execute(0x8007 + (X << 8) + (X << 4));
+                // 0x11 - 0x11 = 0
+                expect(eq(chip8.V(X), 0x00));
+                expect(eq(chip8.V(0xF), 0x01));
+            };
+        }
+    }
+
+
+    // 8XYE stores the value of register VY shifted left one bit in register VX
+    // Set register VF to the most significant bit prior to shift
+    // we do not want to include VF in the testing
+    for (u8 X = 0; X < 0xF; ++X) {
+        for (u8 Y = X + 1; Y < 0xF; ++Y) {
+            test("8XYE; X = " + std::to_string(X) +
+                 ", Y = " + std::to_string(Y)) = [&chip8, X, Y] {
+                chip8.execute(0x6001 + (Y << 8));
+                expect(eq(chip8.V(Y), 0x01));
+                chip8.execute(0x60FF + (X << 8));
+                expect(eq(chip8.V(X), 0xFF));
+                chip8.execute(0x800E + (X << 8) + (Y << 4));
+                // 0x01 << 1 = 0x02
+                expect(eq(chip8.V(X), 0x02));
+                expect(eq(chip8.V(0xF), 0x00));
+
+                chip8.execute(0x60F0 + (Y << 8));
+                expect(eq(chip8.V(Y), 0xF0));
+                chip8.execute(0x600F + (X << 8));
+                expect(eq(chip8.V(X), 0x0F));
+                chip8.execute(0x800E + (X << 8) + (Y << 4));
+                // 0xF0 << 1 = 0xE0
+                expect(eq(chip8.V(X), 0xE0));
+                expect(eq(chip8.V(0xF), 0x01));
+
+                chip8.execute(0x6013 + (Y << 8));
+                expect(eq(chip8.V(Y), 0x13));
+                chip8.execute(0x60A2 + (X << 8));
+                expect(eq(chip8.V(X), 0xA2));
+                chip8.execute(0x800E + (X << 8) + (Y << 4));
+                // 0x13 << 1 = 0x26
+                expect(eq(chip8.V(X), 0x26));
+                expect(eq(chip8.V(0xF), 0x00));
+
+                chip8.execute(0x60BA + (Y << 8));
+                expect(eq(chip8.V(Y), 0xBA));
+                chip8.execute(0x604C + (X << 8));
+                expect(eq(chip8.V(X), 0x4C));
+                chip8.execute(0x800E + (X << 8) + (Y << 4));
+                // 0xBA << 1 = 0x74
+                expect(eq(chip8.V(X), 0x74));
+                expect(eq(chip8.V(0xF), 0x01));
+
+                // test 8XXE
+                chip8.execute(0x6011 + (X << 8));
+                expect(eq(chip8.V(X), 0x11));
+                chip8.execute(0x800E + (X << 8) + (X << 4));
+                // 0x11 << 1 = 
+                expect(eq(chip8.V(X), 0x22));
+                expect(eq(chip8.V(0xF), 0x00));
+            };
+        }
+    }
+
+
     // 9XY0
     // Skip the following instruction if the value of register VX is not equal to the value of register VY
     for (u8 X = 0x0; X < 0xF; ++X) {
