@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 
+#include "key.h"
 #include "spdlog/spdlog.h"
 
 #include "common.h"
@@ -41,6 +42,14 @@ class Chip8 {
     auto instruction_table(InstructionType it) const -> const char* {
         return instruction_table_.at(it).c_str();
     }
+    void keydown(Key key) {
+        spdlog::debug("Key Down: {}", key_to_str(key));
+        keydown_[key_to_index(key)] = true;
+    }
+    void keyup(Key key) {
+        spdlog::debug("Key Up: {}", key_to_str(key));
+        keydown_[key_to_index(key)] = false;
+    }
     
     auto decrement_delay() noexcept -> bool; 
     auto decrement_sound() noexcept -> bool; 
@@ -59,6 +68,7 @@ class Chip8 {
     static constexpr u32 SCREEN_HEIGHT = 32u;
     static constexpr u16 ROM_START = 0x200u;
     static constexpr u16 MEMORY_SIZE = 4096u;
+    static constexpr u8  NUM_KEYS = 16u;
 
     // screen helpers
     auto screen_equal(const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other) const noexcept -> bool; 
@@ -100,6 +110,9 @@ class Chip8 {
 
     // screen
     std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> screen_ = {false};
+
+    // keyboard
+    std::array<bool, NUM_KEYS> keydown_ = {false};
 
     // stack
     // used for storing 16-bit addresses

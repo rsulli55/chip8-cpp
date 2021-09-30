@@ -58,8 +58,8 @@ u8 Emu::handle_event(const SDL_Event &event) {
         }
         break;
 
-    case SDL_KEYDOWN:
-        Uint8 const *keys = SDL_GetKeyboardState(nullptr);
+    case SDL_KEYDOWN: {
+        const Uint8* const keys = SDL_GetKeyboardState(nullptr);
         if (keys[SDL_SCANCODE_P] == 1) {
             chip8_paused_ = !chip8_paused_;
         }
@@ -67,13 +67,25 @@ u8 Emu::handle_event(const SDL_Event &event) {
             push_chip8();
             chip8_.cycle();
             instructions_executed++;
-        } else if (keys[SDL_SCANCODE_R] == 1 && chip8s_.size() > 0) {
+        } else if (keys[SDL_SCANCODE_M] == 1 && chip8s_.size() > 0) {
             chip8_paused_ = true;
             pop_chip8();
             // we popped a full frame of instructions
             instructions_executed = settings_.instructions_per_frame;
         }
+        else {
+            handle_chip8_keydown(keys);
+        }
         break;
+    }
+
+    case SDL_KEYUP: {
+        const Uint8* const keys = SDL_GetKeyboardState(nullptr);
+        handle_chip8_keyup(keys);
+        break;
+    }
+
+
     }
 
     return instructions_executed;
@@ -109,8 +121,6 @@ void Emu::run() {
             delay_decrementer += settings_.delay_decrement_per_frame;
         }
 
-        spdlog::debug("Delay decrementer = {}", delay_decrementer);
-
         // decrement the sound and delay timers and play a sound 
         if (delay_decrementer > 0) {
             delay_decrementer--;
@@ -131,6 +141,19 @@ void Emu::run() {
         /* } */
     }
 }
+
+void Emu::handle_chip8_keydown(const Uint8* const keys) {
+    for (const auto& [scancode, key] : keymap_) {
+        if (keys[scancode] == 1) chip8_.keydown(key);
+    }
+}
+
+void Emu::handle_chip8_keyup(const Uint8* const keys) {
+    for (const auto& [scancode, key] : keymap_) {
+        if (keys[scancode] == 0) chip8_.keyup(key);
+    }
+}
+
 
 void Emu::load_rom(const Rom &rom) { chip8_.load_rom(rom); }
 
@@ -199,3 +222,11 @@ auto build_past_opcodes(const std::deque<Chip8>& chip8s, u32 max_ops) -> std::ve
 
     return opcodes;
 }
+
+const std::map<SDL_Scancode, Key> Emu::keymap_ {
+        {SDL_SCANCODE_1, Key::One},     {SDL_SCANCODE_2, Key::Two},     {SDL_SCANCODE_3, Key::Three},   {SDL_SCANCODE_4, Key::C},
+        {SDL_SCANCODE_Q, Key::Four},    {SDL_SCANCODE_W, Key::Five},    {SDL_SCANCODE_E, Key::Six},     {SDL_SCANCODE_R, Key::D},
+        {SDL_SCANCODE_A, Key::Seven},   {SDL_SCANCODE_S, Key::Eight},   {SDL_SCANCODE_D, Key::Nine},    {SDL_SCANCODE_F, Key::E},
+        {SDL_SCANCODE_Z, Key::A},       {SDL_SCANCODE_X, Key::Zero},    {SDL_SCANCODE_C, Key::B},       {SDL_SCANCODE_V, Key::F}
+};
+
