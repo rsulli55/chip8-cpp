@@ -765,6 +765,186 @@ boost::ut::suite instructions = [] {
         }
     }
 
+    // EX9E
+    // Skip the following instruction if the key corresponding to the hex value 
+    // stored in register VX is pressed
+    for (u8 X = 0x0; X < 0x10; ++X) {
+        test("EX9E; X = " + std::to_string(X)) = [&chip8, X] {
+            u16 base_store = 0x6000;
+            u16 base_op = 0xE09E;
+
+            u8 value = 0x01;
+            auto pc = chip8.pc();
+            u16 op = base_store + (X << 8) + value;
+            chip8.execute(op);
+            expect(eq(chip8.V(X), value));
+            // if key is not down, we should not skip next instruction
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            expect(eq(chip8.pc(), pc));
+            // after the key is pressed we should skip next instruction
+            chip8.keydown(Key::One);
+            chip8.keydown(Key::A);
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            pc += 2;
+            expect(eq(chip8.pc(), pc));
+            // key comes back up, then we should not skip next instruction
+            chip8.keyup(Key::One);
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            expect(eq(chip8.pc(), pc));
+            // A key should still be down, let's load 0xA into register X and check
+            // we should skip next instruction
+            value = 0xA;
+            op = base_store + (X << 8) + value;
+            chip8.execute(op);
+            expect(eq(chip8.V(X), value));
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            pc += 2;
+            expect(eq(chip8.pc(), pc));
+            
+            // let's see what happens if we have too large of a value in register X
+            // 0xFC should check to see if C is pressed, it is not so we should not skip
+            value = 0xFC;
+            op = base_store + (X << 8) + value;
+            chip8.execute(op);
+            expect(eq(chip8.V(X), value));
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            expect(eq(chip8.pc(), pc));
+            // now, press key C and make sure we skip next instruction
+            chip8.keydown(Key::C);
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            pc += 2;
+            expect(eq(chip8.pc(), pc));
+            
+            // call keyup on A and C and make sure no values increment pc
+            chip8.keyup(Key::A);
+            chip8.keyup(Key::C);
+            for (value = 0x0; value < 0x10; ++value) {
+                op = base_store + (X << 8) + value;
+                chip8.execute(op);
+                expect(eq(chip8.V(X), value));
+                op = base_op + (X << 8);
+                chip8.execute(op);
+                expect(eq(chip8.pc(), pc));
+            }
+        };
+    }
+
+    // EXA1
+    // Skip the following instruction if the key corresponding to the hex value 
+    // stored in register VX is not pressed
+    for (u8 X = 0x0; X < 0x10; ++X) {
+        test("EXA1; X = " + std::to_string(X)) = [&chip8, X] {
+            u16 base_store = 0x6000;
+            u16 base_op = 0xE0A1;
+
+            u8 value = 0x01;
+            auto pc = chip8.pc();
+            u16 op = base_store + (X << 8) + value;
+            chip8.execute(op);
+            expect(eq(chip8.V(X), value));
+            // if key is not down, we should skip next instruction
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            pc += 2;
+            expect(eq(chip8.pc(), pc));
+            // after the key is pressed we should not skip next instruction
+            chip8.keydown(Key::One);
+            chip8.keydown(Key::A);
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            expect(eq(chip8.pc(), pc));
+            // key comes back up, then we should skip next instruction
+            chip8.keyup(Key::One);
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            pc += 2;
+            expect(eq(chip8.pc(), pc));
+            // A key should still be down, let's load 0xA into register X and check
+            // we should not skip next instruction
+            value = 0xA;
+            op = base_store + (X << 8) + value;
+            chip8.execute(op);
+            expect(eq(chip8.V(X), value));
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            expect(eq(chip8.pc(), pc));
+            
+            // let's see what happens if we have too large of a value in register X
+            // 0xFC should check to see if C is pressed, it is not so we should skip
+            value = 0xFC;
+            op = base_store + (X << 8) + value;
+            chip8.execute(op);
+            expect(eq(chip8.V(X), value));
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            pc += 2;
+            expect(eq(chip8.pc(), pc));
+            // now, press key C and make sure we don't skip next instruction
+            chip8.keydown(Key::C);
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            expect(eq(chip8.pc(), pc));
+            
+            // call keyup on A and C and make sure all values increment pc
+            chip8.keyup(Key::A);
+            chip8.keyup(Key::C);
+            for (value = 0x0; value < 0x10; ++value) {
+                op = base_store + (X << 8) + value;
+                chip8.execute(op);
+                expect(eq(chip8.V(X), value));
+                op = base_op + (X << 8);
+                chip8.execute(op);
+                pc += 2;
+                expect(eq(chip8.pc(), pc));
+            }
+        };
+    }
+
+
+
+
+    // FX0A
+    // Wait for a keypress and store the result in register VX
+    for (u8 X = 0x0; X < 0x10; ++X) {
+        test("FX0A; X = " + std::to_string(X)) = [&chip8, X] {
+            u16 base_store = 0x6000;
+            u16 base_op = 0xF00A;
+
+            for (auto key: {Key::One, Key::Four, Key::E, Key::A, Key::C}) {
+                for (u8 value: {0x10, 0x00, 0xF0, 0xC3}) {
+                    u16 op = base_store + (X << 8) + value;
+                    chip8.execute(op);
+                    expect(eq(chip8.V(X), value));
+                    auto pc = chip8.pc();
+                    op = base_op + (X << 8);
+                    // pc should stay the same until a key is pressed
+                    expect(eq(chip8.pc(), pc));
+                    for (auto dummy [[maybe_unused]]: {1, 2, 3}) {
+                        chip8.fetch(); // increments pc
+                        chip8.execute(op);
+                        expect(eq(chip8.pc(), pc));
+                    }
+                    // after keypress pc should increment by 2
+                    chip8.keydown(key);
+                    chip8.fetch(); // increments pc
+                    chip8.execute(op);
+                    expect(eq(chip8.pc(), pc + 2));
+                    expect(eq(chip8.V(X), key_to_index(key)));
+                    chip8.keyup(key); // reset current_key_down_
+                }
+            }
+        };
+    }
+
+
+
+
     // Store memory address 0xNNN in register I
     "ANNN"_test = [&chip8] {
         chip8.execute(0xA0AB);

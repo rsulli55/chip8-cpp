@@ -422,12 +422,20 @@ void inline Chip8::DXYN(u16 opcode) noexcept {
 
 }
 
+// Skip the following instruction if the key corresponding to the hex value 
+// stored in register VX is pressed
 void inline Chip8::EX9E([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    u8 hex_value = V_[second_nibble] & 0xF;
+    if (keydown_[hex_value]) pc_ += 2;
 }
 
+// Skip the following instruction if the key corresponding to the hex value stored 
+// in register VX is not pressed
 void inline Chip8::EXA1([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    u8 hex_value = V_[second_nibble] & 0xF;
+    if (!keydown_[hex_value]) pc_ += 2;
 }
 
 // F
@@ -435,8 +443,14 @@ void inline Chip8::FX07([[maybe_unused]] u16 opcode) noexcept {
     return;
 }
 
+// Wait for a keypress and store the result in register VX
 void inline Chip8::FX0A([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    // decrement pc by 2 to stay on this instruction if a key has not been pressed
+    if (current_key_down_ == Key::None)  pc_ -= 2;
+    else {
+        const auto second_nibble = nibble(nib::second, opcode);
+        V_[second_nibble] = key_to_index(current_key_down_);
+    }
 }
 
 void inline Chip8::FX15([[maybe_unused]] u16 opcode) noexcept {

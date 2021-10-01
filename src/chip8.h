@@ -45,10 +45,12 @@ class Chip8 {
     void keydown(Key key) {
         spdlog::debug("Key Down: {}", key_to_str(key));
         keydown_[key_to_index(key)] = true;
+        current_key_down_ = key;
     }
     void keyup(Key key) {
         spdlog::debug("Key Up: {}", key_to_str(key));
         keydown_[key_to_index(key)] = false;
+        current_key_down_ = Key::None;
     }
     
     auto decrement_delay() noexcept -> bool; 
@@ -113,6 +115,7 @@ class Chip8 {
 
     // keyboard
     std::array<bool, NUM_KEYS> keydown_ = {false};
+    Key current_key_down_ {Key::None};
 
     // stack
     // used for storing 16-bit addresses
