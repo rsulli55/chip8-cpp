@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <ranges>
+#include <random>
 
 #include "spdlog/spdlog.h"
 
@@ -45,3 +46,4 @@ constexpr auto byte_to_bitmap(u8 byte) -> std::array<bool, 8> {
     return to_return;
 }
 
+auto random_byte() -> u8; 
