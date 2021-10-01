@@ -1,9 +1,9 @@
 # Taken from Modern CMake Tutorial https://cliutils.gitlab.io/modern-cmake/chapters/basics.html
 
-add_executable(initialization_tests initialization.cpp ../src/chip8.cpp)
-add_executable(instruction_tests instructions.cpp ../src/chip8.cpp)
-add_executable(helper_tests helpers.cpp ../src/chip8.cpp ../src/instruction.cpp)
-add_executable(functionality_tests functionality.cpp ../src/chip8.cpp)
+add_executable(initialization_tests initialization.cpp ../src/chip8.cpp ../src/common.cpp)
+add_executable(instruction_tests instructions.cpp ../src/chip8.cpp ../src/common.cpp)
+add_executable(helper_tests helpers.cpp ../src/chip8.cpp ../src/instruction.cpp ../src/common.cpp)
+add_executable(functionality_tests functionality.cpp ../src/chip8.cpp ../src/common.cpp)
 
 set_property(TARGET initialization_tests
     PROPERTY CXX_STANDARD 20)
