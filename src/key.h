@@ -7,10 +7,11 @@
 #include "common.h"
 
 enum class Key : u8 {
-    One, Two, Three, C,
-    Four, Five, Six, D,
-    Seven, Eight, Nine, E,
-    A, Zero, B, F
+    Zero,   One,    Two,    Three, 
+    Four,   Five,   Six,    Seven,
+    Eight,  Nine,   A,      B,
+    C,      D,      E,      F,
+    None
 };
 
 constexpr auto key_to_index(Key key) -> u8 {
@@ -60,9 +61,15 @@ constexpr auto key_to_str(Key key) -> std::string_view {
             return "B";
         case Key::F:
             return "F";
+        case Key::None:
+            return "None";
         default:
             return "Invalid";
     }
+}
+
+constexpr auto operator<=>(Key key1, Key key2) {
+    return static_cast<u8>(key1) <=> static_cast<u8>(key2);
 }
 
 
