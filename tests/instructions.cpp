@@ -907,6 +907,30 @@ boost::ut::suite instructions = [] {
     }
 
 
+    //
+    // FX07
+    // Store the current value of the delay timer in register VX
+    for (u8 X = 0x0; X < 0x10; ++X) {
+        test("FX0A; X = " + std::to_string(X)) = [&chip8, X] {
+            u16 base_store = 0x6000;
+            u16 store_delay = 0xF007;
+            u16 set_delay = 0xF015;
+
+            for (const u8 value : {1, 3, 5, 28, 100}) {
+                u16 op = base_store + (X << 8) + value;
+                chip8.execute(op);
+                expect(eq(chip8.V(X), value));
+                op = set_delay + (X << 8);
+                chip8.execute(op);
+                expect(eq(chip8.delay(), value));
+                chip8.decrement_delay();
+                expect(eq(chip8.delay(), value - 1));
+                op = store_delay + (X << 8);
+                chip8.execute(op);
+                expect(eq(chip8.V(X), value -1));
+            }
+        };
+    }
 
 
     // FX0A
@@ -942,8 +966,213 @@ boost::ut::suite instructions = [] {
         };
     }
 
+    // FX15
+    // Set the delay timer to the value of register VX
+    for (u8 X = 0x0; X < 0x10; ++X) {
+        test("FX15; X = " + std::to_string(X)) = [&chip8, X] {
+            u16 base_store = 0x6000;
+            u16 base_op = 0xF015;
+
+            for (const u8 value : {1, 3, 5, 28, 100}) {
+                u16 op = base_store + (X << 8) + value;
+                chip8.execute(op);
+                expect(eq(chip8.V(X), value));
+                op = base_op + (X << 8);
+                chip8.execute(op);
+                expect(eq(chip8.delay(), value));
+                chip8.decrement_delay();
+                expect(eq(chip8.delay(), value - 1));
+            }
+        };
+    }
 
 
+    // FX18
+    // Set the sound timer to the value of register VX
+    for (u8 X = 0x0; X < 0x10; ++X) {
+        test("FX18; X = " + std::to_string(X)) = [&chip8, X] {
+            u16 base_store = 0x6000;
+            u16 base_op = 0xF018;
+
+            for (const u8 value : {1, 3, 5, 28, 100}) {
+                u16 op = base_store + (X << 8) + value;
+                chip8.execute(op);
+                expect(eq(chip8.V(X), value));
+                op = base_op + (X << 8);
+                chip8.execute(op);
+                expect(eq(chip8.sound(), value));
+                chip8.decrement_sound();
+                expect(eq(chip8.sound(), value - 1));
+            }
+        };
+    }
+
+    // FX1E
+    // Add the value stored in register VX to register I
+    for (u8 X = 0x0; X < 0x10; ++X) {
+        test("FX1E; X = " + std::to_string(X)) = [&chip8, X] {
+            u16 base_store = 0x6000;
+            u16 base_op = 0xF01E;
+
+            for (u8 value = 0; value < 200; value += 7) {
+                u16 op = base_store + (X << 8) + value;
+                chip8.execute(op);
+                expect(eq(chip8.V(X), value));
+                const auto I = chip8.I();
+                op = base_op + (X << 8);
+                chip8.execute(op);
+                expect(eq(chip8.I(), value + I));
+            }
+        };
+    }
+
+    // FX29
+    // Add the value stored in register VX to register I
+    for (u8 X = 0x0; X < 0x10; ++X) {
+        test("FX29; X = " + std::to_string(X)) = [&chip8, X] {
+            u16 base_store = 0x6000;
+            u16 base_op = 0xF029;
+            const u8 font_char_bytes = 5;
+
+            for (u8 chr = 0; chr < 0x10; ++chr) {
+                u16 op = base_store + (X << 8) + chr;
+                chip8.execute(op);
+                expect(eq(chip8.V(X), chr));
+                // Set I to the location of chr
+                op = base_op + (X << 8);
+                chip8.execute(op);
+                expect(eq(chip8.I(), Chip8::FONT_START + font_char_bytes * chr));
+            }
+
+            // check that when VX stores a value larger than one hex digit, it still works
+            for (const auto value: {0xFA, 0x1B, 0xC4}) {
+                u16 op = base_store + (X << 8) + value;
+                chip8.execute(op);
+                expect(eq(chip8.V(X), value));
+                // Set I to the location of chr
+                op = base_op + (X << 8);
+                chip8.execute(op);
+                expect(eq(chip8.I(), Chip8::FONT_START + font_char_bytes * (value & 0xF)));
+            }
+        };
+    }
+
+
+    // FX33
+    // Add the value stored in register VX to register I
+    for (u8 X = 0x0; X < 0x10; ++X) {
+        test("FX33; X = " + std::to_string(X)) = [&chip8, X] {
+            u16 base_store = 0x6000;
+            u16 base_op = 0xF033;
+            u8 value = 123;
+
+            u16 op = base_store + (X << 8) + value;
+            chip8.execute(op);
+            expect(eq(chip8.V(X), value));
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            const auto I = chip8.I();
+            expect(eq(chip8.memory()[I], 1));
+            expect(eq(chip8.memory()[I + 1], 2));
+            expect(eq(chip8.memory()[I + 2], 3));
+
+            value = 29;
+            op = base_store + (X << 8) + value;
+            chip8.execute(op);
+            expect(eq(chip8.V(X), value));
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            expect(eq(chip8.memory()[I], 0));
+            expect(eq(chip8.memory()[I + 1], 2));
+            expect(eq(chip8.memory()[I + 2], 9));
+
+            value = 137;
+            op = base_store + (X << 8) + value;
+            chip8.execute(op);
+            expect(eq(chip8.V(X), value));
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            expect(eq(chip8.memory()[I], 1));
+            expect(eq(chip8.memory()[I + 1], 3));
+            expect(eq(chip8.memory()[I + 2], 7));
+
+            value = 0;
+            op = base_store + (X << 8) + value;
+            chip8.execute(op);
+            expect(eq(chip8.V(X), value));
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            expect(eq(chip8.memory()[I], 0));
+            expect(eq(chip8.memory()[I + 1], 0));
+            expect(eq(chip8.memory()[I + 2], 0));
+
+            value = 200;
+            op = base_store + (X << 8) + value;
+            chip8.execute(op);
+            expect(eq(chip8.V(X), value));
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            expect(eq(chip8.memory()[I], 2));
+            expect(eq(chip8.memory()[I + 1], 0));
+            expect(eq(chip8.memory()[I + 2], 0));
+        };
+    }
+
+
+
+    // FX55
+    // Store the values of registers V0 to VX inclusive in memory starting at address I
+    // I is set to I + X + 1 after operation
+    for (u8 X = 0x0; X < 0x10; ++X) {
+        test("FX55; X = " + std::to_string(X)) = [&chip8, X] {
+            u16 base_store = 0x6000;
+            u16 base_op = 0xF055;
+            u16 op = 0;
+            const std::array<u8, 16> values =  {5, 6, 8,  10,  12,  1,   200, 84,
+                                                9, 7, 13, 201, 234, 117, 23,  0};
+            // load up registers
+            for (u8 reg = 0; reg <= X; ++reg) {
+                op = base_store + (reg << 8) + values[reg];
+                chip8.execute(op);
+                expect(eq(chip8.V(reg), values[reg]));
+            }
+
+            // write values to memory
+            const auto old_I = chip8.I();
+            op = base_op + (X << 8);
+            chip8.execute(op);
+            expect(eq(chip8.I(), old_I + X + 1));
+
+            // check values in memory
+            for (u8 reg = 0; reg <= X; ++reg) 
+                expect(eq(chip8.memory()[old_I + reg], values[reg]));
+        };
+    }
+            
+    // FX65
+    // Store the values of registers V0 to VX inclusive in memory starting at address I
+    // I is set to I + X + 1 after operation
+    for (u8 X = 0x0; X < 0x10; ++X) {
+        test("FX65; X = " + std::to_string(X)) = [&chip8, X] {
+            u16 base_op = 0xF065;
+            const std::array<u8, 16> values =  {5, 6, 8,  10,  12,  1,   200, 84,
+                                                9, 7, 13, 201, 234, 117, 23,  0};
+
+            // load up memory
+            const auto old_I = chip8.I();
+            for (u8 reg = 0; reg <= X; ++reg) 
+                chip8.modify_memory(old_I + reg, values[reg]);
+
+            // write values to registers
+            u16 op = base_op + (X << 8);
+            chip8.execute(op);
+            expect(eq(chip8.I(), old_I + X + 1));
+
+            // check registers
+            for (u8 reg = 0; reg <= X; ++reg) 
+                expect(eq(chip8.V(reg), values[reg]));
+        };
+    }
 
     // Store memory address 0xNNN in register I
     "ANNN"_test = [&chip8] {
@@ -962,6 +1191,46 @@ boost::ut::suite instructions = [] {
         chip8.execute(0xAC4E);
         expect(eq(chip8.I(), 0x0C4E));
     };
+
+    // BNNN
+    // Jump to address NNN + V0
+    "BNNN"_test = [&chip8] {
+        u16 v0_store = 0x6000;
+        u16 base_op = 0xB000;
+        for (u16 address = 0x0; address < 0x0F00; address += 0x17) {
+            // zero out V0
+            chip8.execute(v0_store);
+            // jump pc to address + V0
+            u16 op = base_op + address;
+            chip8.execute(op);
+            expect(eq(chip8.pc(), address + chip8.V(0)));
+        }
+    };
+
+    // CXNN
+    // Store the current value of the delay timer in register VX
+    for (u8 X = 0x0; X < 0x10; ++X) {
+        test("CXNN; X = " + std::to_string(X)) = [&chip8, X] {
+            u16 base_op = 0xC000;
+            u8 mask = 0x00;
+
+            u16 op = base_op + (X << 8) + mask;
+            chip8.execute(op);
+            expect(eq(chip8.V(X), 0x00));
+
+            mask = 0xF0;
+            op = base_op + (X << 8) + mask;
+            chip8.execute(op);
+            expect(eq(chip8.V(X) & 0xF, 0x00));
+
+            mask = 0x0F;
+            op = base_op + (X << 8) + mask;
+            chip8.execute(op);
+            expect(eq(chip8.V(X) & 0xF0, 0x00));
+
+        };
+    }
+
 
     // Draw sprite at position VX, VY with 0xN bytes of sprite data
     // starting at the address stored in I

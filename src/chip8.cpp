@@ -378,12 +378,22 @@ void inline Chip8::ANNN(u16 opcode) noexcept {
     I_ = opcode & 0x0FFF;
 }
 
+// Jump to address NNN + V0
 void inline Chip8::BNNN([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    const auto third_nibble = nibble(nib::third, opcode);
+    const auto fourth_nibble = nibble(nib::fourth, opcode);
+    pc_ = (second_nibble << 8) + (third_nibble << 4) + fourth_nibble + V_[0];
 }
 
+// Set VX to a random number with a mask of NN
 void inline Chip8::CXNN([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    const auto third_nibble = nibble(nib::third, opcode);
+    const auto fourth_nibble = nibble(nib::fourth, opcode);
+    const auto mask = (third_nibble << 4) + fourth_nibble;
+    const u8 random = random_byte();
+    V_[second_nibble] = random & mask;
 }
 
 // Draw sprite at position VX, VY with 0xN bytes of sprite data
@@ -439,8 +449,10 @@ void inline Chip8::EXA1([[maybe_unused]] u16 opcode) noexcept {
 }
 
 // F
+// Store the current value of the delay timer in register VX
 void inline Chip8::FX07([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    V_[second_nibble] = delay_;
 }
 
 // Wait for a keypress and store the result in register VX
@@ -453,37 +465,64 @@ void inline Chip8::FX0A([[maybe_unused]] u16 opcode) noexcept {
     }
 }
 
+// Set the delay timer to the value of register VX
 void inline Chip8::FX15([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    delay_ = V_[second_nibble];
 }
 
+// Set the sound timer to the value of register VX
 void inline Chip8::FX18([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    sound_ = V_[second_nibble];
 }
 
+// Add the value stored in register VX to register I
 void inline Chip8::FX1E([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    I_ += V_[second_nibble];
 }
 
+// Set I to the memory address of the sprite data corresponding 
+// to the hexadecimal digit stored in register VX
 void inline Chip8::FX29([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    const auto hex_value = V_[second_nibble] & 0xF;
+    const u8 font_char_bytes = 5;
+    I_ = FONT_START + font_char_bytes * hex_value;
 }
 
+// Store the binary-coded decimal equivalent of the value stored in register VX 
+// at addresses I, I + 1, and I + 2
 void inline Chip8::FX33([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    u8 value = V_[second_nibble];
+    for (auto i : {2, 1, 0}) {
+        const auto digit = value % 10;
+        memory_[I_ + i] = digit;
+        value /= 10;
+    }
 }
 
+// Store the values of registers V0 to VX inclusive in memory starting at address I
+// I is set to I + X + 1 after operation
 void inline Chip8::FX55([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    for (u8 reg = 0; reg <= second_nibble; ++reg) 
+        memory_[I_ + reg] = V_[reg];
+
+    I_ += second_nibble + 1;
 }
 
+// Fill registers V0 to VX inclusive with the values stored in memory starting at address I
+// I is set to I + X + 1 after operation
 void inline Chip8::FX65([[maybe_unused]] u16 opcode) noexcept {
-    return;
+    const auto second_nibble = nibble(nib::second, opcode);
+    for (u8 reg = 0; reg <= second_nibble; ++reg) 
+        V_[reg] = memory_[I_ + reg];
+
+    I_ += second_nibble + 1;
 }
-
-
-
-
 
 auto read_instruction_table(std::string_view path)
     -> std::map<InstructionType, std::string> {

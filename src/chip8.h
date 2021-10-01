@@ -71,12 +71,20 @@ class Chip8 {
     static constexpr u16 ROM_START = 0x200u;
     static constexpr u16 MEMORY_SIZE = 4096u;
     static constexpr u8  NUM_KEYS = 16u;
+    static constexpr u16 FONT_START = 0x50u;
 
     // screen helpers
     auto screen_equal(const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other) const noexcept -> bool; 
     auto screen_difference(
         const std::array<bool, SCREEN_WIDTH * SCREEN_HEIGHT> &other)
         const noexcept; 
+
+    // testing helpers
+    void inline modify_memory(u16 location, u8 value) noexcept {
+        assert(location < Chip8::MEMORY_SIZE);
+        memory_[location] = value;
+    }
+
 
   private:
     /// special registers
@@ -90,7 +98,6 @@ class Chip8 {
     std::array<u8, MEMORY_SIZE> memory_ = {0x0}; // 4K memory
 
     // font data
-    static constexpr u16 FONT_START = 0x50u;
     static constexpr std::array<u8, 80> FONT = {
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
         0x20, 0x60, 0x20, 0x20, 0x70, // 1
