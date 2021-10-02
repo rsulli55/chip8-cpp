@@ -125,7 +125,9 @@ void Emu::run() {
         if (delay_decrementer > 0) {
             delay_decrementer--;
             chip8_.decrement_delay();
-            if (chip8_.decrement_sound()) window_.play_audio();
+            auto action = chip8_.decrement_sound();
+            if (action == Chip8::Action::PlaySound) window_.play_audio();
+            else if (action == Chip8::Action::PauseSound) window_.pause_audio();
         }
 
         // render a frame

@@ -1,3 +1,5 @@
+#include <numeric>
+#include <numbers>
 
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
@@ -12,7 +14,8 @@ Window::Window(u8 screen_scale, Renderer& renderer) :
     screen_scale_{screen_scale},
     window_width_{Chip8::SCREEN_WIDTH * screen_scale},
     window_height_{Chip8::SCREEN_HEIGHT * screen_scale},
-    renderer_{renderer} {
+    renderer_{renderer},
+    beep_samples_{build_samples(beep_sec_, beep_freq_, beep_gain_)} {
         init_video();
         init_audio();
     }
@@ -31,8 +34,6 @@ Window::~Window() {
     SDL_DestroyWindow(window_);
     spdlog::debug("Closing audio device");
     SDL_CloseAudioDevice(audio_device_);
-    spdlog::debug("Freeing audio buffer");
-    SDL_FreeWAV(beep_buffer_);
     spdlog::debug("Calling SDL Quit");
     SDL_Quit();
 }
@@ -46,19 +47,33 @@ void Window::render(const std::vector<u16>& past_opcodes, const Chip8& chip8, u3
     SDL_GL_SwapWindow(window_);
 }
 
-void Window::resize() {
+void Window::resize() noexcept {
     int width = 0;
     int height = 0;
     SDL_GL_GetDrawableSize(window_, &width, &height);
     glViewport(0, 0, width, height);
 }
 
-void Window::play_audio() {
+void Window::play_audio() noexcept {
+    // 2 sec of sample is enough bytes 
+    const auto enough_bytes = 2 * beep_spec_.freq;
+    // requeue audio if there are not enough bytes left
+    if (SDL_GetQueuedAudioSize(audio_device_) < enough_bytes) {
+        spdlog::debug("Queueing audio because there are not enough bytes");
+        queue_audio();
+    }
+    // play audio
     SDL_PauseAudioDevice(audio_device_, 0);
-    // requeue audio
-    if (SDL_QueueAudio(audio_device_, beep_buffer_, beep_len_) < 0) {
-        spdlog::error("Could not queue audio\n");
-        spdlog::error("Error: {}", SDL_GetError());
+}
+
+void Window::pause_audio() noexcept {
+    SDL_PauseAudioDevice(audio_device_, 1);
+    // 2 sec of sample is enough bytes 
+    const auto enough_bytes = 2 * beep_spec_.freq;
+    // requeue audio if there are not enough bytes left
+    if (SDL_GetQueuedAudioSize(audio_device_) < enough_bytes) {
+        spdlog::debug("Queueing audio because there are not enough bytes");
+        queue_audio();
     }
 }
 
@@ -124,15 +139,6 @@ void Window::init_audio() {
         std::terminate();
     }
 
-    if(SDL_LoadWAV(beep_file_name_, &beep_spec_, &beep_buffer_, &beep_len_) == nullptr) {
-        spdlog::error("Could not open {}\n", beep_file_name_);
-        spdlog::error("Error: {}", SDL_GetError());
-        std::terminate();
-    }
-
-    spdlog::debug("Spec channels = {}, silence = {}, samples = {}, size = {}, format = {}",
-            beep_spec_.channels, beep_spec_.silence, beep_spec_.samples, beep_spec_.size, beep_spec_.format);
-
     spdlog::debug("SDL found {} audio devices", SDL_GetNumAudioDevices(0));
     audio_device_ = SDL_OpenAudioDevice(nullptr, 0, &beep_spec_, &beep_spec_, SDL_AUDIO_ALLOW_ANY_CHANGE);
 
@@ -142,12 +148,21 @@ void Window::init_audio() {
         std::terminate();
     }
 
-    if (SDL_QueueAudio(audio_device_, beep_buffer_, beep_len_) < 0) {
+    queue_audio();
+}
+
+void Window::queue_audio() {
+    // queue samples
+    const auto sample_size = sizeof(decltype(beep_samples_[0]));
+    spdlog::debug("Audio sample size = {}", sample_size);
+    if(SDL_QueueAudio(audio_device_, beep_samples_.data(), sample_size * beep_samples_.size()) < 0) {
         spdlog::error("Could not queue audio\n");
         spdlog::error("Error: {}", SDL_GetError());
-        std::terminate();
     }
 }
+
+
+
 
 void Window::start_ImGui_frame() {
     ImGui_ImplOpenGL3_NewFrame();
@@ -284,6 +299,40 @@ void Window::render_ImGui_frame(const std::vector<u16>& past_opcodes, const Chip
     debug_window_widget(past_opcodes, chip8, future_to_show);
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+std::vector<int16_t> Window::build_samples(u8 seconds, u32 frequency, u32 gain) {
+
+    const auto& sample_freq = beep_spec_.freq;
+    const auto& channels = beep_spec_.channels;
+
+    const auto time_step = 1.0 / sample_freq;
+    const u32 num_samples = seconds * sample_freq;
+
+    std::vector<int16_t> samples;
+    // channels will duplicate the sample
+    samples.reserve(num_samples * channels);
+
+    auto generate_sample = [&frequency, &time_step, &gain](u32 index) {
+        const auto omega = 2.0 * std::numbers::pi * frequency;
+        return static_cast<int16_t>(gain * std::sin(omega * index * time_step));
+    };
+
+    for (const auto s : std::views::iota(0u, num_samples)) {
+        const auto sample = generate_sample(s);
+        const auto index = s * channels;
+        for (const auto c : std::views::iota(0u, channels)) {
+            samples.push_back(sample);
+            spdlog::debug("Added sample value {} to index {}", samples[index + c], index + c);
+        }
+    }
+
+    const auto min = std::min_element(std::cbegin(samples), std::cend(samples));
+    const auto max = std::max_element(std::cbegin(samples), std::cend(samples));
+
+    spdlog::debug("Min sample = {}, max sample = {}", *min, *max);
+
+    return samples;
 }
 
 

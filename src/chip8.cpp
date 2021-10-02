@@ -49,11 +49,14 @@ auto Chip8::decrement_delay() noexcept -> bool {
     return true;
 }
 
-auto Chip8::decrement_sound() noexcept -> bool {
-    if (sound_ == 0) return false;
+auto Chip8::decrement_sound() noexcept -> Chip8::Action {
+    if (sound_ == 0) return Action::None;
+
+    // pause sound if sound_ will decrement to zero
+    Action act = (sound_ > 1) ? Action::PlaySound : Action::PauseSound;
 
     --sound_;
-    return true;
+    return act;
 }
 
 void Chip8::load_rom(const Rom &rom) {

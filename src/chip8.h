@@ -19,6 +19,8 @@
 class Chip8 {
   public:
 
+    enum class Action { None, PlaySound, PauseSound };  
+
     Chip8();
     Chip8(std::map<InstructionType, std::string> instruction_table);
     ~Chip8() = default;
@@ -43,18 +45,16 @@ class Chip8 {
         return instruction_table_.at(it).c_str();
     }
     void keydown(Key key) {
-        spdlog::debug("Key Down: {}", key_to_str(key));
         keydown_[key_to_index(key)] = true;
         current_key_down_ = key;
     }
     void keyup(Key key) {
-        spdlog::debug("Key Up: {}", key_to_str(key));
         keydown_[key_to_index(key)] = false;
         current_key_down_ = Key::None;
     }
     
     auto decrement_delay() noexcept -> bool; 
-    auto decrement_sound() noexcept -> bool; 
+    auto decrement_sound() noexcept -> Action; 
 
     void load_rom(const Rom& rom);
 
