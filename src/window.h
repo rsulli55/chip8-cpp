@@ -32,8 +32,8 @@ class Window {
     std::vector<int16_t> beep_samples_;
     SDL_AudioDeviceID audio_device_;
     static constexpr u8 beep_sec_ = 3;
-    static constexpr u8 beep_freq_ = 400;
-    static constexpr u8 beep_gain_ = 2000;
+    static constexpr u32 beep_freq_ = 400;
+    static constexpr u32 beep_gain_ = 2000;
 
     u8 screen_scale_;
     u32 window_width_;
