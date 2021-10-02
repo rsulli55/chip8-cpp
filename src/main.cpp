@@ -16,9 +16,16 @@ int main(int argc, char *argv[]) {
         .screen_scale = 24
     };
 
+    if (argc < 2) {
+        spdlog::error("You must provide the rom filename. Exiting");
+        std::terminate();
+    }
+
+    const char* rom_file = argv[1];
+
     Emu emu{Chip8{read_instruction_table(instr_path)}, settings};
 
-    const auto rom = read_rom_file("ibm_logo.ch8");
+    const auto rom = read_rom_file(rom_file);
     emu.load_rom(rom);
 
 
